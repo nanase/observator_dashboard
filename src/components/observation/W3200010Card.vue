@@ -57,7 +57,7 @@ function fill(text: string, filler: string): string {
     <v-col cols="12" class="align-self-end">
       <div class="queued">
         <LevelIcon
-          icon="mdi-wifi-strength"
+          icon="mdi-network-strength"
           :level="observator.sensor[3].value ?? -127"
           :converter="convertRSSILevel"
           size="xsmall"
