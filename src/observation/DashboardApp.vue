@@ -94,6 +94,24 @@ function loadObservator(): ObservatorItem[] {
   console.info('observator loaded');
   return observator;
 }
+
+function moveAboveElement(observators: ObservatorItem[], observatorItem: ObservatorItem) {
+  const index = observators.indexOf(observatorItem);
+
+  if (index > 0) {
+    observators.splice(index, 1)[0];
+    observators.splice(index - 1, 0, observatorItem);
+  }
+}
+
+function moveBelowElement(observators: ObservatorItem[], observatorItem: ObservatorItem) {
+  const index = observators.indexOf(observatorItem);
+
+  if (index < observators.length - 1) {
+    observators.splice(index, 1)[0];
+    observators.splice(index + 1, 0, observatorItem);
+  }
+}
 </script>
 
 <template>
@@ -115,15 +133,18 @@ function loadObservator(): ObservatorItem[] {
             md="4"
             lg="3"
             xl="2"
-            v-for="observator in savedObservator"
+            v-for="(observator, index) in savedObservator"
             :key="observator.address"
             class="align-self-stretch"
           >
             <ObservatorCard
               :observator="observator"
               is-saved
+              :order="index === 0 ? 1 : index === unsavedObservator.length - 1 ? -1 : 0"
               @save-menu-clicked="saveStateChanged(observator)"
               @rename-dialog-closed="saveObservator"
+              @move-above-clicked="moveAboveElement(savedObservator, observator)"
+              @move-below-clicked="moveBelowElement(savedObservator, observator)"
             />
           </v-col>
         </v-row>
@@ -131,12 +152,22 @@ function loadObservator(): ObservatorItem[] {
           <v-col cols="12" class="pb-0">
             <h3>Unsaved Observator</h3>
           </v-col>
-          <v-col cols="6" md="4" lg="3" xl="2" v-for="observator in unsavedObservator" :key="observator.address">
+          <v-col
+            cols="6"
+            md="4"
+            lg="3"
+            xl="2"
+            v-for="(observator, index) in unsavedObservator"
+            :key="observator.address"
+          >
             <ObservatorCard
               :observator="observator"
               :is-saved="false"
+              :order="index === 0 ? 1 : index === unsavedObservator.length - 1 ? -1 : 0"
               @save-menu-clicked="saveStateChanged(observator)"
               @rename-dialog-closed="saveObservator"
+              @move-above-clicked="moveAboveElement(unsavedObservator, observator)"
+              @move-below-clicked="moveBelowElement(unsavedObservator, observator)"
             />
           </v-col>
         </v-row>
