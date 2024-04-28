@@ -11,10 +11,11 @@ import type {
 import W3200010Card from './W3200010Card.vue';
 import ESP32Card from './ESP32CentralCard.vue';
 
-const { observator, isSaved, order } = defineProps<{
+const { observator, isSaved, showMoveAbove, showMoveBelow } = defineProps<{
   observator: ObservatorItem;
   isSaved: boolean;
-  order: 1 | 0 | -1;
+  showMoveAbove: boolean;
+  showMoveBelow: boolean;
 }>();
 const emit = defineEmits(['saveMenuClicked', 'renameDialogClosed', 'moveAboveClicked', 'moveBelowClicked']);
 const dialog = ref<boolean>();
@@ -68,16 +69,16 @@ function is<T extends Observator>(observator: Observator | undefined, targetType
         </v-card>
       </v-dialog>
 
-      <v-divider />
+      <v-divider v-if="showMoveAbove || showMoveBelow" />
       <v-list-item
         title="Move above"
-        v-if="order !== 1"
+        v-if="showMoveAbove"
         @click="emit('moveAboveClicked')"
         prepend-icon="mdi-arrow-up"
       />
       <v-list-item
         title="Move below"
-        v-if="order !== -1"
+        v-if="showMoveBelow"
         @click="emit('moveBelowClicked')"
         prepend-icon="mdi-arrow-down"
       />

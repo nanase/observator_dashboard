@@ -141,7 +141,8 @@ function moveBelowElement(observators: ObservatorItem[], observatorItem: Observa
             <ObservatorCard
               :observator="observator"
               is-saved
-              :order="index === 0 ? 1 : index === unsavedObservator.length - 1 ? -1 : 0"
+              :showMoveAbove="savedObservator.length > 1 && index > 0"
+              :showMoveBelow="savedObservator.length > 1 && index < savedObservator.length - 1"
               @save-menu-clicked="saveStateChanged(observator)"
               @rename-dialog-closed="saveObservator"
               @move-above-clicked="moveAboveElement(savedObservator, observator)"
@@ -164,7 +165,8 @@ function moveBelowElement(observators: ObservatorItem[], observatorItem: Observa
             <ObservatorCard
               :observator="observator"
               :is-saved="false"
-              :order="index === 0 ? 1 : index === unsavedObservator.length - 1 ? -1 : 0"
+              :showMoveAbove="unsavedObservator.length > 1 && index > 0"
+              :showMoveBelow="unsavedObservator.length > 1 && index < unsavedObservator.length - 1"
               @save-menu-clicked="saveStateChanged(observator)"
               @rename-dialog-closed="saveObservator"
               @move-above-clicked="moveAboveElement(unsavedObservator, observator)"
