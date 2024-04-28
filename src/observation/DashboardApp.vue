@@ -7,6 +7,7 @@ import { definePeriodicCall } from '@/lib/vue';
 import type { ObservationResultContainer, ObservatorItem } from '@/type/observator';
 import ThemeToggleButton from '@/components/common/ThemeToggleButton.vue';
 import UpdateTime from '@/components/common/UpdateTime.vue';
+import UpdateCircle from '@/components/common/UpdateCircle.vue';
 import AnimatedClock from '@/components/common/AnimatedClock.vue';
 import ObservatorCard from '@/components/observation/ObservatorCard.vue';
 
@@ -176,7 +177,7 @@ function moveBelowElement(observators: ObservatorItem[], observatorItem: Observa
             <v-card variant="plain">
               <v-tooltip v-if="fetchedAt.isValid()" location="bottom">
                 <template v-slot:activator="{ props }">
-                  <v-icon v-bind="props" size="xsmall">mdi-clock-outline</v-icon>
+                  <UpdateCircle v-bind="props" :time="fetchedAt" />
                 </template>
                 <p>Sequence #{{ observationSequence ?? '--' }}</p>
                 <p>Fetched At {{ fetchedAt.format('YYYY-MM-DD h:mm:ss') }}</p>

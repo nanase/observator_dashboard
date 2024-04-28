@@ -2,6 +2,7 @@
 import { JST } from '@/lib/dayjs';
 
 import type { ObservatorW3200010 } from '@/type/observator';
+import UpdateCircle from '@/components/common/UpdateCircle.vue';
 import UpdateTime from '@/components/common/UpdateTime.vue';
 import LevelIcon from '@/components/common/LevelIcon.vue';
 
@@ -78,11 +79,12 @@ function fill(text: string, filler: string): string {
       <div class="queued">
         <v-tooltip location="bottom">
           <template v-slot:activator="{ props }">
-            <v-icon v-bind="props" size="xsmall">mdi-clock-outline</v-icon>
+            <UpdateCircle v-bind="props" :time="JST(observator.fetchedAt * 1000)" />
           </template>
           <p>Sequence #{{ observator.sequence }}</p>
           <p>Fetched At {{ JST(observator.fetchedAt * 1000).format('YYYY-MM-DD h:mm:ss') }}</p>
         </v-tooltip>
+        {{}}
         <UpdateTime :time="JST(observator.fetchedAt * 1000)" :update-interval="5" />
       </div>
     </v-col>
