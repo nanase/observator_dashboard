@@ -4,15 +4,14 @@ import { JST } from '@/lib/dayjs';
 import type { ObservatorESP32Central } from '@/type/observator';
 import UpdateCircle from '@/components/common/UpdateCircle.vue';
 import UpdateTime from '@/components/common/UpdateTime.vue';
+import LevelIcon from '@/components/common/LevelIcon.vue';
+
+import { convertRSSILevel, fill } from '@/components/observation/converter';
 
 const { observator, name } = defineProps<{
   observator: ObservatorESP32Central;
   name: string;
 }>();
-
-function fill(text: string, filler: string): string {
-  return text.length === 0 ? filler : text;
-}
 
 function calcSeaPressure(): number {
   const z = Number(import.meta.env.VITE_DASHBOARD_SENSOR_ALTITUDE);
@@ -44,6 +43,16 @@ function calcSeaPressure(): number {
       <div>{{ fill(name, '(no name)') }}</div>
     </v-col>
     <v-col cols="12" class="align-self-end">
+      <div class="queued">
+        <LevelIcon
+          icon="mdi-network-strength"
+          :level="observator.sensor[4].value ?? -127"
+          :converter="convertRSSILevel"
+          size="xsmall"
+        />
+        {{ observator.sensor[4].value }}
+        dBm
+      </div>
       <div class="queued">
         <v-tooltip location="bottom">
           <template v-slot:activator="{ props }">

@@ -24,7 +24,13 @@ export interface ObservatorW3200010 extends Observator {
 
 export interface ObservatorESP32Central extends Observator {
   type: 'ESP32-Central';
-  sensor: [SensorValue<'temperature'>, SensorValue<'humidity'>, SensorValue<'pressure'>, SensorValue<'co2'>];
+  sensor: [
+    SensorValue<'temperature'>,
+    SensorValue<'humidity'>,
+    SensorValue<'pressure'>,
+    SensorValue<'co2'>,
+    SensorValue<'rssi'>,
+  ];
 }
 
 export interface ObservationResultContainer {

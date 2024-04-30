@@ -6,40 +6,12 @@ import UpdateCircle from '@/components/common/UpdateCircle.vue';
 import UpdateTime from '@/components/common/UpdateTime.vue';
 import LevelIcon from '@/components/common/LevelIcon.vue';
 
+import { convertRSSILevel, convertBatteryLevel, fill } from '@/components/observation/converter';
+
 const { observator, name } = defineProps<{
   observator: ObservatorW3200010;
   name: string;
 }>();
-
-function convertRSSILevel(level: number): string {
-  if (level >= -30) {
-    return '-4';
-  } else if (level >= -60) {
-    return '-3';
-  } else if (level >= -75) {
-    return '-2';
-  } else if (level >= -90) {
-    return '-1';
-  } else {
-    return '-outline';
-  }
-}
-
-function convertBatteryLevel(level: number): string {
-  const value = Math.round(level / 10) * 10;
-
-  if (value === 100) {
-    return '';
-  } else if (value === 0) {
-    return '-outline';
-  } else {
-    return `-${value}`;
-  }
-}
-
-function fill(text: string, filler: string): string {
-  return text.length === 0 ? filler : text;
-}
 </script>
 
 <template>
