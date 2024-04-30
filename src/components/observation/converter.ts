@@ -1,11 +1,11 @@
 export function convertRSSILevel(level: number): string {
-  if (level >= -30) {
+  if (level >= -65) {
     return '-4';
-  } else if (level >= -60) {
-    return '-3';
   } else if (level >= -75) {
+    return '-3';
+  } else if (level >= -85) {
     return '-2';
-  } else if (level >= -90) {
+  } else if (level >= -95) {
     return '-1';
   } else {
     return '-outline';
