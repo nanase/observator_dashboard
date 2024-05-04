@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from 'vue';
+import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
 import axios from '@/lib/axios';
 import dayjs, { Dayjs, JST } from '@/lib/dayjs';
 
@@ -12,10 +12,22 @@ import AnimatedClock from '@/components/common/AnimatedClock.vue';
 import ObservatorCard from '@/components/observation/ObservatorCard.vue';
 
 const errorSnackbar = ref<boolean>();
+const importDialog = ref<boolean>();
 const observationSequence = ref<number>();
 const fetchedAt = ref<Dayjs>(dayjs(null));
 const savedObservator = ref<ObservatorItem[]>([]);
 const unsavedObservator = ref<ObservatorItem[]>([]);
+
+const savedObservatorJson = computed<string>({
+  get: () => JSON.stringify(savedObservator.value),
+  set: (value) => {
+    try {
+      savedObservator.value = JSON.parse(value);
+    } catch {
+      console.error('failed to import');
+    }
+  },
+});
 
 onMounted(() => {
   savedObservator.value = loadObservator();
@@ -124,6 +136,37 @@ function moveBelowElement(observators: ObservatorItem[], observatorItem: Observa
         <template v-slot:append>
           <AnimatedClock />
           <ThemeToggleButton />
+
+          <v-menu>
+            <template v-slot:activator="{ props }">
+              <v-btn icon v-bind="props">
+                <v-icon>mdi-dots-vertical</v-icon>
+              </v-btn>
+            </template>
+
+            <v-list>
+              <v-dialog v-model="importDialog" max-width="600">
+                <template v-slot:activator="{ props: activatorProps }">
+                  <v-list-item v-bind="activatorProps" title="Export / Import" prepend-icon="mdi-export" />
+                </template>
+
+                <v-card prepend-icon="mdi-export" title="Export / Import">
+                  <v-card-text>
+                    <v-row dense>
+                      <v-col cols="12">
+                        <v-textarea v-model="savedObservatorJson" style="font-family: monospace"></v-textarea>
+                      </v-col>
+                    </v-row>
+                  </v-card-text>
+                  <v-divider></v-divider>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn text="Close" variant="plain" @click="importDialog = false"></v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+            </v-list>
+          </v-menu>
         </template>
       </v-app-bar>
 
