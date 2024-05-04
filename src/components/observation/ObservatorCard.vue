@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, defineEmits } from 'vue';
+import dayjs, { Dayjs, JST } from '@/lib/dayjs';
+import { definePeriodicCall } from '@/lib/vue';
 
 import type {
   ObservatorItem,
@@ -11,6 +13,8 @@ import type {
 import W3200010Card from './W3200010Card.vue';
 import ESP32Card from './ESP32CentralCard.vue';
 
+import { fill } from './converter';
+
 const { observator, isSaved, showMoveAbove, showMoveBelow } = defineProps<{
   observator: ObservatorItem;
   isSaved: boolean;
@@ -18,7 +22,14 @@ const { observator, isSaved, showMoveAbove, showMoveBelow } = defineProps<{
   showMoveBelow: boolean;
 }>();
 const emit = defineEmits(['saveMenuClicked', 'renameDialogClosed', 'moveAboveClicked', 'moveBelowClicked']);
-const dialog = ref<boolean>();
+const renameDialog = ref<boolean>();
+const detailDialog = ref<boolean>();
+const now = ref<Dayjs>(dayjs());
+
+definePeriodicCall(async () => {
+  now.value = dayjs();
+  return 1;
+});
 
 function is<T extends Observator>(observator: Observator | undefined, targetType: ObservatorType): observator is T {
   return observator?.type === targetType;
@@ -45,12 +56,84 @@ function is<T extends Observator>(observator: Observator | undefined, targetType
     </template>
 
     <v-list>
+      <v-dialog v-model="detailDialog" max-width="600">
+        <template v-slot:activator="{ props: activatorProps }">
+          <v-list-item v-bind="activatorProps" title="Details..." prepend-icon="mdi-card-bulleted-outline" />
+        </template>
+
+        <v-card prepend-icon="mdi-cellphone-wireless" title="Details">
+          <v-card-text>
+            <v-row no-gutters>
+              <v-col cols="4">Name</v-col>
+              <v-col>{{ fill(observator.name, '(no name)') }}</v-col>
+            </v-row>
+            <v-row no-gutters>
+              <v-col cols="4">Address</v-col>
+              <v-col>{{ observator.address }}</v-col>
+            </v-row>
+            <template v-if="observator.result">
+              <v-row no-gutters>
+                <v-col cols="4">Type</v-col>
+                <v-col>{{ observator.result.type }}</v-col>
+              </v-row>
+              <v-row no-gutters>
+                <v-col cols="4">Last sequence</v-col>
+                <v-col>#{{ observator.result.sequence }}</v-col>
+              </v-row>
+              <v-row no-gutters>
+                <v-col cols="4">Last fetched at</v-col>
+                <v-col>
+                  {{ JST(observator.result.fetchedAt * 1000).format('YYYY-MM-DD h:mm:ss') }}
+                  ({{ now.diff(JST(observator.result.fetchedAt * 1000), 's') }}s ago)
+                </v-col>
+              </v-row>
+              <template v-for="(sensor, index) in observator.result.sensor">
+                <v-divider class="py-1"></v-divider>
+                <h4>Sensor #{{ index }}</h4>
+                <v-col>
+                  <v-row no-gutters>
+                    <v-col cols="4">Type</v-col>
+                    <v-col>{{ sensor.type }}</v-col>
+                  </v-row>
+                  <v-row no-gutters v-if="sensor.name">
+                    <v-col cols="4">Name</v-col>
+                    <v-col>{{ fill(sensor.name, '(no name)') }}</v-col>
+                  </v-row>
+                  <v-row no-gutters>
+                    <v-col cols="4">Raw value</v-col>
+                    <v-col>{{ sensor.value }}</v-col>
+                  </v-row>
+                  <v-row no-gutters>
+                    <v-col cols="4">Unit</v-col>
+                    <v-col>{{ sensor.unit }}</v-col>
+                  </v-row>
+                  <v-row no-gutters>
+                    <v-col cols="4">Precision</v-col>
+                    <v-col>{{ sensor.precision }}</v-col>
+                  </v-row>
+                </v-col>
+              </template>
+            </template>
+          </v-card-text>
+          <v-divider></v-divider>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn text="Close" variant="plain" @click="detailDialog = false"></v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+      <v-divider />
+
       <v-list-item title="Unsave" v-if="isSaved" @click="emit('saveMenuClicked')" prepend-icon="mdi-content-save-off" />
       <v-list-item title="Save" v-else @click="emit('saveMenuClicked')" prepend-icon="mdi-content-save" />
 
-      <v-dialog v-model="dialog" max-width="600" @update:modelValue="!dialog ? emit('renameDialogClosed') : ''">
+      <v-dialog
+        v-model="renameDialog"
+        max-width="600"
+        @update:modelValue="!renameDialog ? emit('renameDialogClosed') : ''"
+      >
         <template v-slot:activator="{ props: activatorProps }">
-          <v-list-item v-bind="activatorProps" title="Rename" prepend-icon="mdi-rename" />
+          <v-list-item v-bind="activatorProps" title="Rename..." prepend-icon="mdi-rename" />
         </template>
 
         <v-card prepend-icon="mdi-cellphone-wireless" :title="`Observator (${observator.address})`">
@@ -64,7 +147,7 @@ function is<T extends Observator>(observator: Observator | undefined, targetType
           <v-divider></v-divider>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn text="Close" variant="plain" @click="(dialog = false), emit('renameDialogClosed')"></v-btn>
+            <v-btn text="Close" variant="plain" @click="(renameDialog = false), emit('renameDialogClosed')"></v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
