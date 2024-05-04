@@ -30,6 +30,8 @@ definePeriodicCall(async () => {
 
 <style lang="scss">
 .animated-clock {
+  padding: 0 1rem;
+
   .date {
     display: inline-block;
     font-size: 75%;
