@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
-import { useIntervalFn } from '@vueuse/core';
+import { ref, computed } from 'vue';
+import { useIntervalFn, useStorage } from '@vueuse/core';
 import axios from '@/lib/axios';
 import dayjs, { Dayjs, JST } from '@/lib/dayjs';
 
@@ -15,7 +15,7 @@ const errorSnackbar = ref<boolean>();
 const importDialog = ref<boolean>();
 const observationSequence = ref<number>();
 const fetchedAt = ref<Dayjs>(dayjs(null));
-const savedObservator = ref<ObservatorItem[]>([]);
+const savedObservator = useStorage<ObservatorItem[]>('observator', []);
 const unsavedObservator = ref<ObservatorItem[]>([]);
 const fetchInterval = ref<number>(0);
 
@@ -28,15 +28,6 @@ const savedObservatorJson = computed<string>({
       console.error('failed to import');
     }
   },
-});
-
-onMounted(() => {
-  savedObservator.value = loadObservator();
-  window.addEventListener('beforeunload', saveObservator);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener('beforeunload', saveObservator);
 });
 
 useIntervalFn(async () => {
@@ -84,7 +75,6 @@ function saveStateChanged(observator: ObservatorItem) {
   if (indexInSaved > -1) {
     savedObservator.value.splice(indexInSaved, 1);
     unsavedObservator.value.push(observator);
-    saveObservator();
     return;
   }
 
@@ -93,19 +83,7 @@ function saveStateChanged(observator: ObservatorItem) {
   if (indexInUnSaved > -1) {
     unsavedObservator.value.splice(indexInUnSaved, 1);
     savedObservator.value.push(observator);
-    saveObservator();
   }
-}
-
-function saveObservator() {
-  localStorage.setItem('observator', JSON.stringify(savedObservator.value));
-  console.info('observator saved');
-}
-
-function loadObservator(): ObservatorItem[] {
-  const observator: ObservatorItem[] = JSON.parse(localStorage.getItem('observator') ?? '[]');
-  console.info('observator loaded');
-  return observator;
 }
 
 function moveAboveElement(observators: ObservatorItem[], observatorItem: ObservatorItem) {
@@ -187,7 +165,6 @@ function moveBelowElement(observators: ObservatorItem[], observatorItem: Observa
               :showMoveAbove="savedObservator.length > 1 && index > 0"
               :showMoveBelow="savedObservator.length > 1 && index < savedObservator.length - 1"
               @save-menu-clicked="saveStateChanged(observator)"
-              @rename-dialog-closed="saveObservator"
               @move-above-clicked="moveAboveElement(savedObservator, observator)"
               @move-below-clicked="moveBelowElement(savedObservator, observator)"
             />
@@ -211,7 +188,6 @@ function moveBelowElement(observators: ObservatorItem[], observatorItem: Observa
               :showMoveAbove="unsavedObservator.length > 1 && index > 0"
               :showMoveBelow="unsavedObservator.length > 1 && index < unsavedObservator.length - 1"
               @save-menu-clicked="saveStateChanged(observator)"
-              @rename-dialog-closed="saveObservator"
               @move-above-clicked="moveAboveElement(unsavedObservator, observator)"
               @move-below-clicked="moveBelowElement(unsavedObservator, observator)"
             />
