@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import { JST } from '@/lib/dayjs';
-
 import type { ObservatorW3200010 } from '@/type/observator';
-import UpdateCircle from '@/components/common/UpdateCircle.vue';
-import UpdateTime from '@/components/common/UpdateTime.vue';
+import CardBase from './CardBase.vue';
 import LevelIcon from '@/components/common/LevelIcon.vue';
 
 import { convertRSSILevel, convertBatteryLevel, fill } from '@/components/observation/converter';
@@ -16,8 +13,8 @@ const { observator, name, hidden } = defineProps<{
 </script>
 
 <template>
-  <v-row no-gutters class="h-100" justify="start">
-    <v-col cols="12" class="align-self-start">
+  <CardBase :observator :name :hidden>
+    <template #sensors>
       <div class="text-green-darken-2 queued">
         <span class="text-h4 font-weight-bold">{{ observator.sensor[0].value.toFixed(1) ?? '--' }}</span>
         <span class="font-weight-bold">℃</span>
@@ -26,13 +23,8 @@ const { observator, name, hidden } = defineProps<{
         <span class="text-h4 font-weight-bold">{{ observator.sensor[1].value ?? '--' }}</span>
         <span class="font-weight-bold">%</span>
       </div>
-      <div>{{ fill(name, '(no name)') }}</div>
-    </v-col>
-    <v-col cols="12" class="align-self-end" v-if="hidden">
-      <v-icon icon="mdi-eye-off" size="xsmall" />
-      Hidden
-    </v-col>
-    <v-col cols="12" class="align-self-end">
+    </template>
+    <template #status>
       <div class="queued">
         <LevelIcon
           icon="mdi-network-strength"
@@ -53,27 +45,6 @@ const { observator, name, hidden } = defineProps<{
         {{ observator.sensor[2].value }}
         %
       </div>
-      <div class="queued">
-        <v-tooltip location="bottom">
-          <template v-slot:activator="{ props }">
-            <UpdateCircle v-bind="props" :time="JST(observator.fetchedAt * 1000)" />
-          </template>
-          <p>Sequence #{{ observator.sequence }}</p>
-          <p>Fetched At {{ JST(observator.fetchedAt * 1000).format('YYYY-MM-DD h:mm:ss') }}</p>
-        </v-tooltip>
-        {{}}
-        <UpdateTime :time="JST(observator.fetchedAt * 1000)" :update-interval="5" />
-      </div>
-    </v-col>
-  </v-row>
+    </template>
+  </CardBase>
 </template>
-
-<style lang="scss" scoped>
-.queued {
-  display: inline-block;
-
-  &:not(:last-child) {
-    padding-right: 0.5rem;
-  }
-}
-</style>
