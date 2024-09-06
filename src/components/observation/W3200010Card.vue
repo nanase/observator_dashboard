@@ -8,9 +8,10 @@ import LevelIcon from '@/components/common/LevelIcon.vue';
 
 import { convertRSSILevel, convertBatteryLevel, fill } from '@/components/observation/converter';
 
-const { observator, name } = defineProps<{
+const { observator, name, hidden } = defineProps<{
   observator: ObservatorW3200010;
   name: string;
+  hidden?: boolean;
 }>();
 </script>
 
@@ -26,6 +27,10 @@ const { observator, name } = defineProps<{
         <span class="font-weight-bold">%</span>
       </div>
       <div>{{ fill(name, '(no name)') }}</div>
+    </v-col>
+    <v-col cols="12" class="align-self-end" v-if="hidden">
+      <v-icon icon="mdi-eye-off" size="xsmall" />
+      Hidden
     </v-col>
     <v-col cols="12" class="align-self-end">
       <div class="queued">

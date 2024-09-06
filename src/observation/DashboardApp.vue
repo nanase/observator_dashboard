@@ -16,15 +16,16 @@ const importDialog = ref<boolean>();
 const showHiddenObservator = ref<boolean>();
 const observationSequence = ref<number>();
 const fetchedAt = ref<Dayjs>(dayjs(null));
-const savedObservator = useStorage<ObservatorItem[]>('observator', []);
-const unsavedObservator = ref<ObservatorItem[]>([]);
+const observators = useStorage<ObservatorItem[]>('observator', []);
+const shownObservator = computed<ObservatorItem[]>(() => observators.value.filter((o) => !o.hidden));
+const hiddenObservator = computed<ObservatorItem[]>(() => observators.value.filter((o) => o.hidden));
 const fetchInterval = ref<number>(0);
 
 const savedObservatorJson = computed<string>({
-  get: () => JSON.stringify(savedObservator.value),
+  get: () => JSON.stringify(observators.value),
   set: (value) => {
     try {
-      savedObservator.value = JSON.parse(value);
+      observators.value = JSON.parse(value);
     } catch {
       console.error('failed to import');
     }
@@ -41,19 +42,19 @@ useIntervalFn(async () => {
       observationSequence.value = container.sequence;
 
       for (const result of container.result) {
-        const indexInSaved = savedObservator.value.findIndex((o) => o.address === result.address);
+        const indexInSaved = observators.value.findIndex((o) => o.address === result.address);
 
         if (indexInSaved > -1) {
-          savedObservator.value[indexInSaved].result = result;
+          observators.value[indexInSaved].result = result;
           continue;
         }
 
-        const indexInUnSaved = unsavedObservator.value.findIndex((o) => o.address === result.address);
+        const indexInUnSaved = observators.value.findIndex((o) => o.address === result.address);
 
         if (indexInUnSaved > -1) {
-          unsavedObservator.value[indexInUnSaved].result = result;
+          observators.value[indexInUnSaved].result = result;
         } else {
-          unsavedObservator.value.push({
+          observators.value.push({
             address: result.address,
             name: result.address,
             result,
@@ -69,23 +70,6 @@ useIntervalFn(async () => {
     fetchInterval.value = 60 * 1000;
   }
 });
-
-function saveStateChanged(observator: ObservatorItem) {
-  const indexInSaved = savedObservator.value.findIndex((o) => o.address === observator.address);
-
-  if (indexInSaved > -1) {
-    savedObservator.value.splice(indexInSaved, 1);
-    unsavedObservator.value.push(observator);
-    return;
-  }
-
-  const indexInUnSaved = unsavedObservator.value.findIndex((o) => o.address === observator.address);
-
-  if (indexInUnSaved > -1) {
-    unsavedObservator.value.splice(indexInUnSaved, 1);
-    savedObservator.value.push(observator);
-  }
-}
 
 function moveAboveElement(observators: ObservatorItem[], observatorItem: ObservatorItem) {
   const index = observators.indexOf(observatorItem);
@@ -157,94 +141,23 @@ function moveBelowElement(observators: ObservatorItem[], observatorItem: Observa
       </v-menu>
     </template>
 
-    <v-row class="d-flex" height="100">
+    <v-row class="d-flex" height="100" v-if="shownObservator.length > 0">
       <v-col
         cols="6"
         md="4"
         lg="3"
         xl="2"
-        v-for="(observator, index) in savedObservator.filter((observator) => !observator.hidden)"
+        v-for="(observator, index) in showHiddenObservator ? observators : shownObservator"
         :key="observator.address"
         class="align-self-stretch"
       >
         <ObservatorCard
           :observator="observator"
           is-saved
-          :showMoveAbove="savedObservator.length > 1 && index > 0"
-          :showMoveBelow="savedObservator.length > 1 && index < savedObservator.length - 1"
-          @save-menu-clicked="saveStateChanged(observator)"
-          @move-above-clicked="moveAboveElement(savedObservator, observator)"
-          @move-below-clicked="moveBelowElement(savedObservator, observator)"
-        />
-      </v-col>
-    </v-row>
-    <v-row v-if="unsavedObservator.length > 0">
-      <v-col cols="12" class="pb-0">
-        <h3>Unsaved Observator</h3>
-      </v-col>
-      <v-col
-        cols="6"
-        md="4"
-        lg="3"
-        xl="2"
-        v-for="(observator, index) in unsavedObservator.filter((observator) => !observator.hidden)"
-        :key="observator.address"
-      >
-        <ObservatorCard
-          :observator="observator"
-          :is-saved="false"
-          :showMoveAbove="unsavedObservator.length > 1 && index > 0"
-          :showMoveBelow="unsavedObservator.length > 1 && index < unsavedObservator.length - 1"
-          @save-menu-clicked="saveStateChanged(observator)"
-          @move-above-clicked="moveAboveElement(unsavedObservator, observator)"
-          @move-below-clicked="moveBelowElement(unsavedObservator, observator)"
-        />
-      </v-col>
-    </v-row>
-    <v-row
-      v-if="
-        showHiddenObservator &&
-        (savedObservator.filter((observator) => observator.hidden).length ||
-          unsavedObservator.filter((observator) => observator.hidden).length)
-      "
-    >
-      <v-col cols="12" class="pb-0">
-        <h3>Hidden Observator</h3>
-      </v-col>
-      <v-col
-        cols="6"
-        md="4"
-        lg="3"
-        xl="2"
-        v-for="(observator, index) in savedObservator.filter((observator) => observator.hidden)"
-        :key="observator.address"
-      >
-        <ObservatorCard
-          :observator
-          :is-saved="false"
-          :showMoveAbove="savedObservator.length > 1 && index > 0"
-          :showMoveBelow="savedObservator.length > 1 && index < savedObservator.length - 1"
-          @save-menu-clicked="saveStateChanged(observator)"
-          @move-above-clicked="moveAboveElement(savedObservator, observator)"
-          @move-below-clicked="moveBelowElement(savedObservator, observator)"
-        />
-      </v-col>
-      <v-col
-        cols="6"
-        md="4"
-        lg="3"
-        xl="2"
-        v-for="(observator, index) in unsavedObservator.filter((observator) => observator.hidden)"
-        :key="observator.address"
-      >
-        <ObservatorCard
-          :observator
-          :is-saved="false"
-          :showMoveAbove="unsavedObservator.length > 1 && index > 0"
-          :showMoveBelow="unsavedObservator.length > 1 && index < unsavedObservator.length - 1"
-          @save-menu-clicked="saveStateChanged(observator)"
-          @move-above-clicked="moveAboveElement(unsavedObservator, observator)"
-          @move-below-clicked="moveBelowElement(unsavedObservator, observator)"
+          :showMoveAbove="observators.length > 1 && index > 0"
+          :showMoveBelow="observators.length > 1 && index < observators.length - 1"
+          @move-above-clicked="moveAboveElement(observators, observator)"
+          @move-below-clicked="moveBelowElement(observators, observator)"
         />
       </v-col>
     </v-row>

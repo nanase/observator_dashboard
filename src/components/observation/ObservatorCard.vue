@@ -15,13 +15,12 @@ import ESP32Card from './ESP32CentralCard.vue';
 
 import { fill } from './converter';
 
-const { observator, isSaved, showMoveAbove, showMoveBelow } = defineProps<{
+const { observator, showMoveAbove, showMoveBelow } = defineProps<{
   observator: ObservatorItem;
-  isSaved: boolean;
   showMoveAbove: boolean;
   showMoveBelow: boolean;
 }>();
-const emit = defineEmits(['saveMenuClicked', 'renameDialogClosed', 'moveAboveClicked', 'moveBelowClicked']);
+const emit = defineEmits(['renameDialogClosed', 'moveAboveClicked', 'moveBelowClicked']);
 const renameDialog = ref<boolean>();
 const detailDialog = ref<boolean>();
 const now = ref<Dayjs>(dayjs());
@@ -38,17 +37,19 @@ function is<T extends Observator>(observator: Observator | undefined, targetType
 <template>
   <v-menu>
     <template v-slot:activator="{ props }">
-      <v-card variant="elevated" v-bind="props" class="h-100">
+      <v-card :variant="observator.hidden ? 'outlined' : 'elevated'" v-bind="props" class="h-100">
         <v-card-text class="h-100">
           <W3200010Card
             v-if="is<ObservatorW3200010>(observator.result, 'W3200010')"
             :observator="observator.result"
             :name="observator.name"
+            :hidden="observator.hidden"
           />
           <ESP32Card
             v-if="is<ObservatorESP32Central>(observator.result, 'ESP32-Central')"
             :observator="observator.result"
             :name="observator.name"
+            :hidden="observator.hidden"
           />
         </v-card-text>
       </v-card>
@@ -122,9 +123,6 @@ function is<T extends Observator>(observator: Observator | undefined, targetType
         </v-card>
       </v-dialog>
       <v-divider />
-
-      <v-list-item title="Unsave" v-if="isSaved" @click="emit('saveMenuClicked')" prepend-icon="mdi-content-save-off" />
-      <v-list-item title="Save" v-else @click="emit('saveMenuClicked')" prepend-icon="mdi-content-save" />
 
       <v-list-item title="Show" v-if="observator.hidden" @click="observator.hidden = false" prepend-icon="mdi-eye" />
       <v-list-item title="Hide" v-else @click="observator.hidden = true" prepend-icon="mdi-eye-off" />
