@@ -1,19 +1,19 @@
-import { fileURLToPath, URL } from 'node:url';
+/// <reference types="vitest" />
 import { resolve } from 'path';
 import { defineConfig } from 'vite';
 import VueMacros from 'unplugin-vue-macros/vite';
 import Vue from '@vitejs/plugin-vue';
 import webfontDownload from 'vite-plugin-webfont-dl';
 
-const root = resolve(__dirname, 'src');
-const outDir = resolve(__dirname, 'docs');
+const root = resolve(__dirname);
+const srcDir = resolve(root, 'src');
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  root,
+  root: srcDir,
   base: '/observator/',
-  publicDir: '../public',
-  envDir: '../',
+  publicDir: resolve(root, 'public'),
+  envDir: root,
   plugins: [
     VueMacros({
       plugins: {
@@ -28,24 +28,37 @@ export default defineConfig({
     webfontDownload(),
   ],
   resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-    },
+    alias: [{ find: '@', replacement: srcDir }],
   },
   css: {
     devSourcemap: true,
   },
   build: {
-    outDir,
+    outDir: resolve(root, 'docs'),
     rollupOptions: {
       input: {
-        dashboard: resolve(root, 'observation', 'dashboard.html'),
+        dashboard: resolve(srcDir, 'observation', 'dashboard.html'),
       },
       output: {
         chunkFileNames: 'assets/observator-[name]-[hash].js',
       },
     },
     emptyOutDir: true,
+  },
+  test: {
+    root,
+    include: ['test/**/*.test.ts'],
+    globals: true,
+    coverage: {
+      reporter: ['text', 'json'],
+      include: ['src/**/*.{ts,vue}'],
+      exclude: ['**/index.ts'],
+    },
+    server: {
+      deps: {
+        inline: ['vuetify'],
+      },
+    },
   },
   server: {
     port: 15173,
