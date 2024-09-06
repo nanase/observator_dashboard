@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-
-import { definePeriodicCall } from '@/lib/vue';
+import { useIntervalFn } from '@vueuse/core';
 import dayjs, { Dayjs } from '@/lib/dayjs';
 
 const time = ref<Dayjs>(dayjs());
 
-definePeriodicCall(async () => {
+useIntervalFn(() => {
   time.value = dayjs();
-  return 0.2;
-});
+}, 200);
 </script>
 
 <template>

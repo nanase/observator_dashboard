@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
-
-import { definePeriodicCall } from '@/lib/vue';
+import { useIntervalFn } from '@vueuse/core';
 import dayjs, { Dayjs } from '@/lib/dayjs';
 
 const {
@@ -22,12 +21,11 @@ const readableElapsedTime = computed(() => {
   else return `${elapsedTime.value}${suffix[0]}`;
 });
 
-async function updateElapsedTime() {
+function updateElapsedTime() {
   elapsedTime.value = dayjs().diff(time, 's');
-  return updateInterval;
 }
 
-definePeriodicCall(updateElapsedTime);
+useIntervalFn(updateElapsedTime, () => updateInterval * 1000);
 watch(() => time, updateElapsedTime);
 </script>
 

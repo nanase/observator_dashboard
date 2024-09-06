@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
+import { useIntervalFn } from '@vueuse/core';
 import axios from '@/lib/axios';
 import dayjs, { Dayjs, JST } from '@/lib/dayjs';
 
-import { definePeriodicCall } from '@/lib/vue';
 import type { ObservationResultContainer, ObservatorItem } from '@/type/observator';
 import ThemeToggleButton from '@/components/common/ThemeToggleButton.vue';
 import UpdateTime from '@/components/common/UpdateTime.vue';
@@ -17,6 +17,7 @@ const observationSequence = ref<number>();
 const fetchedAt = ref<Dayjs>(dayjs(null));
 const savedObservator = ref<ObservatorItem[]>([]);
 const unsavedObservator = ref<ObservatorItem[]>([]);
+const fetchInterval = ref<number>(0);
 
 const savedObservatorJson = computed<string>({
   get: () => JSON.stringify(savedObservator.value),
@@ -38,8 +39,8 @@ onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', saveObservator);
 });
 
-definePeriodicCall(
-  async () => {
+useIntervalFn(async () => {
+  try {
     errorSnackbar.value = false;
     const container = (await axios.get<ObservationResultContainer>(import.meta.env.VITE_DASHBOARD_RESULT_URL)).data;
     fetchedAt.value = dayjs();
@@ -69,14 +70,13 @@ definePeriodicCall(
       }
     }
 
-    return 10;
-  },
-  async (error) => {
+    fetchInterval.value = 10 * 1000;
+  } catch (error) {
     console.error(`Fetching error. Retrying in 1 minute: ${error}`);
     errorSnackbar.value = true;
-    return 60;
-  },
-);
+    fetchInterval.value = 60 * 1000;
+  }
+});
 
 function saveStateChanged(observator: ObservatorItem) {
   const indexInSaved = savedObservator.value.findIndex((o) => o.address === observator.address);

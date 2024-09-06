@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
-
-import { definePeriodicCall } from '@/lib/vue';
+import { ref, watch } from 'vue';
+import { useIntervalFn } from '@vueuse/core';
 import dayjs, { Dayjs } from '@/lib/dayjs';
 
 const { time, updateInterval = 0.2 } = defineProps<{
@@ -11,12 +10,11 @@ const { time, updateInterval = 0.2 } = defineProps<{
 
 const elapsedTime = ref<number>(Number.NaN);
 
-async function updateElapsedTime() {
+function updateElapsedTime() {
   elapsedTime.value = dayjs().diff(time, 's');
-  return updateInterval;
 }
 
-definePeriodicCall(updateElapsedTime);
+useIntervalFn(updateElapsedTime, () => updateInterval * 1000);
 watch(() => time, updateElapsedTime);
 
 function circleColor(): string {

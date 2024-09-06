@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, defineEmits } from 'vue';
 import dayjs, { Dayjs, JST } from '@/lib/dayjs';
-import { definePeriodicCall } from '@/lib/vue';
+import { useIntervalFn } from '@vueuse/core';
 
 import type {
   ObservatorItem,
@@ -26,10 +26,9 @@ const renameDialog = ref<boolean>();
 const detailDialog = ref<boolean>();
 const now = ref<Dayjs>(dayjs());
 
-definePeriodicCall(async () => {
+useIntervalFn(() => {
   now.value = dayjs();
-  return 1;
-});
+}, 1000);
 
 function is<T extends Observator>(observator: Observator | undefined, targetType: ObservatorType): observator is T {
   return observator?.type === targetType;
