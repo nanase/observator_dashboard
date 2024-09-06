@@ -157,113 +157,111 @@ function moveBelowElement(observators: ObservatorItem[], observatorItem: Observa
       </v-menu>
     </template>
 
-    <v-container>
-      <v-row class="d-flex" height="100">
-        <v-col
-          cols="6"
-          md="4"
-          lg="3"
-          xl="2"
-          v-for="(observator, index) in savedObservator.filter((observator) => !observator.hidden)"
-          :key="observator.address"
-          class="align-self-stretch"
-        >
-          <ObservatorCard
-            :observator="observator"
-            is-saved
-            :showMoveAbove="savedObservator.length > 1 && index > 0"
-            :showMoveBelow="savedObservator.length > 1 && index < savedObservator.length - 1"
-            @save-menu-clicked="saveStateChanged(observator)"
-            @move-above-clicked="moveAboveElement(savedObservator, observator)"
-            @move-below-clicked="moveBelowElement(savedObservator, observator)"
-          />
-        </v-col>
-      </v-row>
-      <v-row v-if="unsavedObservator.length > 0">
-        <v-col cols="12" class="pb-0">
-          <h3>Unsaved Observator</h3>
-        </v-col>
-        <v-col
-          cols="6"
-          md="4"
-          lg="3"
-          xl="2"
-          v-for="(observator, index) in unsavedObservator.filter((observator) => !observator.hidden)"
-          :key="observator.address"
-        >
-          <ObservatorCard
-            :observator="observator"
-            :is-saved="false"
-            :showMoveAbove="unsavedObservator.length > 1 && index > 0"
-            :showMoveBelow="unsavedObservator.length > 1 && index < unsavedObservator.length - 1"
-            @save-menu-clicked="saveStateChanged(observator)"
-            @move-above-clicked="moveAboveElement(unsavedObservator, observator)"
-            @move-below-clicked="moveBelowElement(unsavedObservator, observator)"
-          />
-        </v-col>
-      </v-row>
-      <v-row
-        v-if="
-          showHiddenObservator &&
-          (savedObservator.filter((observator) => observator.hidden).length ||
-            unsavedObservator.filter((observator) => observator.hidden).length)
-        "
+    <v-row class="d-flex" height="100">
+      <v-col
+        cols="6"
+        md="4"
+        lg="3"
+        xl="2"
+        v-for="(observator, index) in savedObservator.filter((observator) => !observator.hidden)"
+        :key="observator.address"
+        class="align-self-stretch"
       >
-        <v-col cols="12" class="pb-0">
-          <h3>Hidden Observator</h3>
-        </v-col>
-        <v-col
-          cols="6"
-          md="4"
-          lg="3"
-          xl="2"
-          v-for="(observator, index) in savedObservator.filter((observator) => observator.hidden)"
-          :key="observator.address"
-        >
-          <ObservatorCard
-            :observator
-            :is-saved="false"
-            :showMoveAbove="savedObservator.length > 1 && index > 0"
-            :showMoveBelow="savedObservator.length > 1 && index < savedObservator.length - 1"
-            @save-menu-clicked="saveStateChanged(observator)"
-            @move-above-clicked="moveAboveElement(savedObservator, observator)"
-            @move-below-clicked="moveBelowElement(savedObservator, observator)"
-          />
-        </v-col>
-        <v-col
-          cols="6"
-          md="4"
-          lg="3"
-          xl="2"
-          v-for="(observator, index) in unsavedObservator.filter((observator) => observator.hidden)"
-          :key="observator.address"
-        >
-          <ObservatorCard
-            :observator
-            :is-saved="false"
-            :showMoveAbove="unsavedObservator.length > 1 && index > 0"
-            :showMoveBelow="unsavedObservator.length > 1 && index < unsavedObservator.length - 1"
-            @save-menu-clicked="saveStateChanged(observator)"
-            @move-above-clicked="moveAboveElement(unsavedObservator, observator)"
-            @move-below-clicked="moveBelowElement(unsavedObservator, observator)"
-          />
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12" class="text-right">
-          <v-card variant="plain">
-            <v-tooltip v-if="fetchedAt.isValid()" location="bottom">
-              <template v-slot:activator="{ props }">
-                <UpdateCircle v-bind="props" :time="fetchedAt" />
-              </template>
-              <p>Sequence #{{ observationSequence ?? '--' }}</p>
-              <p>Fetched At {{ fetchedAt.format('YYYY-MM-DD h:mm:ss') }}</p>
-            </v-tooltip>
-            {{ ' ' }}
-            <UpdateTime :time="JST(fetchedAt)" :update-interval="5" />
-          </v-card>
-        </v-col>
-      </v-row>
-    </v-container>
+        <ObservatorCard
+          :observator="observator"
+          is-saved
+          :showMoveAbove="savedObservator.length > 1 && index > 0"
+          :showMoveBelow="savedObservator.length > 1 && index < savedObservator.length - 1"
+          @save-menu-clicked="saveStateChanged(observator)"
+          @move-above-clicked="moveAboveElement(savedObservator, observator)"
+          @move-below-clicked="moveBelowElement(savedObservator, observator)"
+        />
+      </v-col>
+    </v-row>
+    <v-row v-if="unsavedObservator.length > 0">
+      <v-col cols="12" class="pb-0">
+        <h3>Unsaved Observator</h3>
+      </v-col>
+      <v-col
+        cols="6"
+        md="4"
+        lg="3"
+        xl="2"
+        v-for="(observator, index) in unsavedObservator.filter((observator) => !observator.hidden)"
+        :key="observator.address"
+      >
+        <ObservatorCard
+          :observator="observator"
+          :is-saved="false"
+          :showMoveAbove="unsavedObservator.length > 1 && index > 0"
+          :showMoveBelow="unsavedObservator.length > 1 && index < unsavedObservator.length - 1"
+          @save-menu-clicked="saveStateChanged(observator)"
+          @move-above-clicked="moveAboveElement(unsavedObservator, observator)"
+          @move-below-clicked="moveBelowElement(unsavedObservator, observator)"
+        />
+      </v-col>
+    </v-row>
+    <v-row
+      v-if="
+        showHiddenObservator &&
+        (savedObservator.filter((observator) => observator.hidden).length ||
+          unsavedObservator.filter((observator) => observator.hidden).length)
+      "
+    >
+      <v-col cols="12" class="pb-0">
+        <h3>Hidden Observator</h3>
+      </v-col>
+      <v-col
+        cols="6"
+        md="4"
+        lg="3"
+        xl="2"
+        v-for="(observator, index) in savedObservator.filter((observator) => observator.hidden)"
+        :key="observator.address"
+      >
+        <ObservatorCard
+          :observator
+          :is-saved="false"
+          :showMoveAbove="savedObservator.length > 1 && index > 0"
+          :showMoveBelow="savedObservator.length > 1 && index < savedObservator.length - 1"
+          @save-menu-clicked="saveStateChanged(observator)"
+          @move-above-clicked="moveAboveElement(savedObservator, observator)"
+          @move-below-clicked="moveBelowElement(savedObservator, observator)"
+        />
+      </v-col>
+      <v-col
+        cols="6"
+        md="4"
+        lg="3"
+        xl="2"
+        v-for="(observator, index) in unsavedObservator.filter((observator) => observator.hidden)"
+        :key="observator.address"
+      >
+        <ObservatorCard
+          :observator
+          :is-saved="false"
+          :showMoveAbove="unsavedObservator.length > 1 && index > 0"
+          :showMoveBelow="unsavedObservator.length > 1 && index < unsavedObservator.length - 1"
+          @save-menu-clicked="saveStateChanged(observator)"
+          @move-above-clicked="moveAboveElement(unsavedObservator, observator)"
+          @move-below-clicked="moveBelowElement(unsavedObservator, observator)"
+        />
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="12" class="text-right">
+        <v-card variant="plain">
+          <v-tooltip v-if="fetchedAt.isValid()" location="bottom">
+            <template v-slot:activator="{ props }">
+              <UpdateCircle v-bind="props" :time="fetchedAt" />
+            </template>
+            <p>Sequence #{{ observationSequence ?? '--' }}</p>
+            <p>Fetched At {{ fetchedAt.format('YYYY-MM-DD h:mm:ss') }}</p>
+          </v-tooltip>
+          {{ ' ' }}
+          <UpdateTime :time="JST(fetchedAt)" :update-interval="5" />
+        </v-card>
+      </v-col>
+    </v-row>
   </AppBase>
 </template>
