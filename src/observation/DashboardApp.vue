@@ -13,6 +13,7 @@ import ObservatorCard from '@/components/observation/ObservatorCard.vue';
 
 const errorSnackbar = ref<boolean>();
 const importDialog = ref<boolean>();
+const showHiddenObservator = ref<boolean>();
 const observationSequence = ref<number>();
 const fetchedAt = ref<Dayjs>(dayjs(null));
 const savedObservator = useStorage<ObservatorItem[]>('observator', []);
@@ -143,6 +144,19 @@ function moveBelowElement(observators: ObservatorItem[], observatorItem: Observa
                   </v-card-actions>
                 </v-card>
               </v-dialog>
+
+              <v-list-item
+                v-if="showHiddenObservator"
+                title="Hide hidden observator"
+                prepend-icon="mdi-eye-off"
+                @click="showHiddenObservator = false"
+              />
+              <v-list-item
+                v-else
+                title="Show hidden observator"
+                prepend-icon="mdi-eye"
+                @click="showHiddenObservator = true"
+              />
             </v-list>
           </v-menu>
         </template>
@@ -155,7 +169,7 @@ function moveBelowElement(observators: ObservatorItem[], observatorItem: Observa
             md="4"
             lg="3"
             xl="2"
-            v-for="(observator, index) in savedObservator"
+            v-for="(observator, index) in savedObservator.filter((observator) => !observator.hidden)"
             :key="observator.address"
             class="align-self-stretch"
           >
@@ -179,11 +193,58 @@ function moveBelowElement(observators: ObservatorItem[], observatorItem: Observa
             md="4"
             lg="3"
             xl="2"
-            v-for="(observator, index) in unsavedObservator"
+            v-for="(observator, index) in unsavedObservator.filter((observator) => !observator.hidden)"
             :key="observator.address"
           >
             <ObservatorCard
               :observator="observator"
+              :is-saved="false"
+              :showMoveAbove="unsavedObservator.length > 1 && index > 0"
+              :showMoveBelow="unsavedObservator.length > 1 && index < unsavedObservator.length - 1"
+              @save-menu-clicked="saveStateChanged(observator)"
+              @move-above-clicked="moveAboveElement(unsavedObservator, observator)"
+              @move-below-clicked="moveBelowElement(unsavedObservator, observator)"
+            />
+          </v-col>
+        </v-row>
+        <v-row
+          v-if="
+            showHiddenObservator &&
+            (savedObservator.filter((observator) => observator.hidden).length ||
+              unsavedObservator.filter((observator) => observator.hidden).length)
+          "
+        >
+          <v-col cols="12" class="pb-0">
+            <h3>Hidden Observator</h3>
+          </v-col>
+          <v-col
+            cols="6"
+            md="4"
+            lg="3"
+            xl="2"
+            v-for="(observator, index) in savedObservator.filter((observator) => observator.hidden)"
+            :key="observator.address"
+          >
+            <ObservatorCard
+              :observator
+              :is-saved="false"
+              :showMoveAbove="savedObservator.length > 1 && index > 0"
+              :showMoveBelow="savedObservator.length > 1 && index < savedObservator.length - 1"
+              @save-menu-clicked="saveStateChanged(observator)"
+              @move-above-clicked="moveAboveElement(savedObservator, observator)"
+              @move-below-clicked="moveBelowElement(savedObservator, observator)"
+            />
+          </v-col>
+          <v-col
+            cols="6"
+            md="4"
+            lg="3"
+            xl="2"
+            v-for="(observator, index) in unsavedObservator.filter((observator) => observator.hidden)"
+            :key="observator.address"
+          >
+            <ObservatorCard
+              :observator
               :is-saved="false"
               :showMoveAbove="unsavedObservator.length > 1 && index > 0"
               :showMoveBelow="unsavedObservator.length > 1 && index < unsavedObservator.length - 1"

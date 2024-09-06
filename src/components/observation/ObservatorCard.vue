@@ -126,6 +126,9 @@ function is<T extends Observator>(observator: Observator | undefined, targetType
       <v-list-item title="Unsave" v-if="isSaved" @click="emit('saveMenuClicked')" prepend-icon="mdi-content-save-off" />
       <v-list-item title="Save" v-else @click="emit('saveMenuClicked')" prepend-icon="mdi-content-save" />
 
+      <v-list-item title="Show" v-if="observator.hidden" @click="observator.hidden = false" prepend-icon="mdi-eye" />
+      <v-list-item title="Hide" v-else @click="observator.hidden = true" prepend-icon="mdi-eye-off" />
+
       <v-dialog
         v-model="renameDialog"
         max-width="600"

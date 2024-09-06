@@ -42,4 +42,5 @@ export interface ObservatorItem {
   address: string;
   name: string;
   result?: Observator;
+  hidden?: boolean;
 }
