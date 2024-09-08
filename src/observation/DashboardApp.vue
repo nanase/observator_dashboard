@@ -18,7 +18,6 @@ const observationSequence = ref<number>();
 const fetchedAt = ref<Dayjs>(dayjs(null));
 const observators = useStorage<ObservatorItem[]>('observator', []);
 const shownObservator = computed<ObservatorItem[]>(() => observators.value.filter((o) => !o.hidden));
-const hiddenObservator = computed<ObservatorItem[]>(() => observators.value.filter((o) => o.hidden));
 const fetchInterval = ref<number>(0);
 
 const savedObservatorJson = computedJSON(observators);
