@@ -657,9 +657,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nanase/alnilam@https://github.com/nanase/alnilam.git#0.3.1":
-  version: 0.3.1
-  resolution: "@nanase/alnilam@https://github.com/nanase/alnilam.git#commit=2bf86721ab678f95f517730c05d1607ce220f24a"
+"@nanase/alnilam@https://github.com/nanase/alnilam.git#0.4.4":
+  version: 0.4.4
+  resolution: "@nanase/alnilam@https://github.com/nanase/alnilam.git#commit=777f7bff247886ca1e85ee256fba0be880a5c410"
   dependencies:
     axios: "npm:^1.7.7"
     axios-retry: "npm:^4.5.0"
@@ -667,7 +667,7 @@ __metadata:
     vue: "npm:^3.5.3"
     vue-router: "npm:^4.4.3"
     vuetify: "npm:^3.7.1"
-  checksum: 10c0/ba8ef9bd39a9b43dfe84e27fdddd381d6e8710e4d40177106a543f62fc71f27a455b514419f65fdac4f4ad69df8544d6fb3fd831ea070ce910fad57042f61839
+  checksum: 10c0/fdbdb6668c22114e8a23d40e44f7cef0bfde4fce8036c98de78aa59f56fadb2bc4e686461197e9436ea3f222e2b6337d8e29c6af731903bf4d683cc64ad81330
   languageName: node
   linkType: hard
 
@@ -4854,7 +4854,7 @@ __metadata:
   resolution: "observator@workspace:."
   dependencies:
     "@mdi/font": "npm:^7.4.47"
-    "@nanase/alnilam": "https://github.com/nanase/alnilam.git#0.3.1"
+    "@nanase/alnilam": "https://github.com/nanase/alnilam.git#0.4.4"
     "@rushstack/eslint-patch": "npm:^1.10.4"
     "@types/node": "npm:^22.5.4"
     "@vitejs/plugin-vue": "npm:^5.1.3"

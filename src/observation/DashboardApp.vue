@@ -2,13 +2,13 @@
 import { ref, computed, useTemplateRef } from 'vue';
 import { useIntervalFn, useStorage } from '@vueuse/core';
 import axios from '@/lib/axios';
-import dayjs, { Dayjs, JST } from '@/lib/dayjs';
+import { AppBase, AnimatedClock } from '@nanase/alnilam/components';
+import { computedJSON } from '@nanase/alnilam/use';
+import dayjs, { Dayjs, fromLocale } from '@nanase/alnilam/dayjs';
 
 import type { ObservationResultContainer, ObservatorItem } from '@/type/observator';
-import AppBase from '@/components/common/AppBase.vue';
 import UpdateTime from '@/components/common/UpdateTime.vue';
 import UpdateCircle from '@/components/common/UpdateCircle.vue';
-import AnimatedClock from '@/components/common/AnimatedClock.vue';
 import ObservatorCard from '@/components/observation/ObservatorCard.vue';
 
 const appBase = useTemplateRef('appBase');
@@ -21,16 +21,7 @@ const shownObservator = computed<ObservatorItem[]>(() => observators.value.filte
 const hiddenObservator = computed<ObservatorItem[]>(() => observators.value.filter((o) => o.hidden));
 const fetchInterval = ref<number>(0);
 
-const savedObservatorJson = computed<string>({
-  get: () => JSON.stringify(observators.value),
-  set: (value) => {
-    try {
-      observators.value = JSON.parse(value);
-    } catch {
-      console.error('failed to import');
-    }
-  },
-});
+const savedObservatorJson = computedJSON(observators);
 
 useIntervalFn(async () => {
   try {
@@ -172,7 +163,7 @@ function moveBelowElement(observators: ObservatorItem[], observatorItem: Observa
             <p>Fetched At {{ fetchedAt.format('YYYY-MM-DD h:mm:ss') }}</p>
           </v-tooltip>
           {{ ' ' }}
-          <UpdateTime :time="JST(fetchedAt)" :update-interval="5" />
+          <UpdateTime :time="fromLocale('ja-JP', fetchedAt)" :update-interval="5" />
         </v-card>
       </v-col>
     </v-row>

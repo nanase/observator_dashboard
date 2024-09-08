@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import dayjs, { Dayjs, JST } from '@/lib/dayjs';
+import dayjs, { Dayjs, fromLocale } from '@nanase/alnilam/dayjs';
 import { useIntervalFn } from '@vueuse/core';
 
 import type {
@@ -83,8 +83,8 @@ function is<T extends Observator>(observator: Observator | undefined, targetType
               <v-row no-gutters>
                 <v-col cols="4">Last fetched at</v-col>
                 <v-col>
-                  {{ JST(observator.result.fetchedAt * 1000).format('YYYY-MM-DD h:mm:ss') }}
-                  ({{ now.diff(JST(observator.result.fetchedAt * 1000), 's') }}s ago)
+                  {{ fromLocale('ja-JP', observator.result.fetchedAt * 1000).format('YYYY-MM-DD h:mm:ss') }}
+                  ({{ now.diff(fromLocale('ja-JP', observator.result.fetchedAt * 1000), 's') }}s ago)
                 </v-col>
               </v-row>
               <template v-for="(sensor, index) in observator.result.sensor">

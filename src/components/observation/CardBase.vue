@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { JST } from '@/lib/dayjs';
+import { fromLocale } from '@nanase/alnilam/dayjs';
 
 import UpdateCircle from '@/components/common/UpdateCircle.vue';
 import UpdateTime from '@/components/common/UpdateTime.vue';
@@ -29,13 +29,13 @@ const { observator, name, hidden } = defineProps<{
       <div class="queued">
         <v-tooltip location="bottom">
           <template v-slot:activator="{ props }">
-            <UpdateCircle v-bind="props" :time="JST(observator.fetchedAt * 1000)" />
+            <UpdateCircle v-bind="props" :time="fromLocale('ja-JP', observator.fetchedAt * 1000)" />
           </template>
           <p>Sequence #{{ observator.sequence }}</p>
-          <p>Fetched At {{ JST(observator.fetchedAt * 1000).format('YYYY-MM-DD h:mm:ss') }}</p>
+          <p>Fetched At {{ fromLocale('ja-JP', observator.fetchedAt * 1000).format('YYYY-MM-DD h:mm:ss') }}</p>
         </v-tooltip>
         {{}}
-        <UpdateTime :time="JST(observator.fetchedAt * 1000)" :update-interval="5" />
+        <UpdateTime :time="fromLocale('ja-JP', observator.fetchedAt * 1000)" :update-interval="5" />
       </div>
     </v-col>
   </v-row>
