@@ -18,7 +18,7 @@ const observationSequence = ref<number>();
 const fetchedAt = ref<Dayjs>(dayjs(null));
 const observators = useStorage<ObservatorItem[]>('observator', []);
 const shownObservator = computed<ObservatorItem[]>(() => observators.value.filter((o) => !o.hidden));
-const fetchInterval = ref<number>(0);
+const fetchInterval = ref<number>(1000);
 
 const savedObservatorJson = computedJSON(observators);
 
@@ -59,7 +59,7 @@ useIntervalFn(async () => {
     appBase.value?.showErrorSnackbar();
     fetchInterval.value = 60 * 1000;
   }
-});
+}, fetchInterval);
 
 function moveAboveElement(observators: ObservatorItem[], observatorItem: ObservatorItem) {
   const index = observators.indexOf(observatorItem);
