@@ -5,6 +5,7 @@ import axios from '@/lib/axios';
 import { AppBase, AnimatedClock } from '@nanase/alnilam/components';
 import { computedJSON } from '@nanase/alnilam/use';
 import dayjs, { Dayjs, fromLocale } from '@nanase/alnilam/dayjs';
+import { moveAbove, moveBelow } from '@nanase/alnilam/array';
 
 import type { ObservationResultContainer, ObservatorItem } from '@/type/observator';
 import UpdateTime from '@/components/common/UpdateTime.vue';
@@ -60,24 +61,6 @@ useIntervalFn(async () => {
     fetchInterval.value = 60 * 1000;
   }
 }, fetchInterval);
-
-function moveAboveElement(observators: ObservatorItem[], observatorItem: ObservatorItem) {
-  const index = observators.indexOf(observatorItem);
-
-  if (index > 0) {
-    observators.splice(index, 1)[0];
-    observators.splice(index - 1, 0, observatorItem);
-  }
-}
-
-function moveBelowElement(observators: ObservatorItem[], observatorItem: ObservatorItem) {
-  const index = observators.indexOf(observatorItem);
-
-  if (index < observators.length - 1) {
-    observators.splice(index, 1)[0];
-    observators.splice(index + 1, 0, observatorItem);
-  }
-}
 </script>
 
 <template>
@@ -146,8 +129,8 @@ function moveBelowElement(observators: ObservatorItem[], observatorItem: Observa
           is-saved
           :showMoveAbove="observators.length > 1 && index > 0"
           :showMoveBelow="observators.length > 1 && index < observators.length - 1"
-          @move-above-clicked="moveAboveElement(observators, observator)"
-          @move-below-clicked="moveBelowElement(observators, observator)"
+          @move-above-clicked="moveAbove(observators, observator)"
+          @move-below-clicked="moveBelow(observators, observator)"
         />
       </v-col>
     </v-row>
@@ -162,7 +145,7 @@ function moveBelowElement(observators: ObservatorItem[], observatorItem: Observa
             <p>Fetched At {{ fetchedAt.format('YYYY-MM-DD h:mm:ss') }}</p>
           </v-tooltip>
           {{ ' ' }}
-          <UpdateTime :time="fromLocale('ja-JP', fetchedAt)" :update-interval="5" />
+          <UpdateTime :time="fromLocale('ja-JP', fetchedAt)" :update-interval="5000" />
         </v-card>
       </v-col>
     </v-row>

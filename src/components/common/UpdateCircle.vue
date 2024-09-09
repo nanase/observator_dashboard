@@ -1,21 +1,16 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { useIntervalFn } from '@vueuse/core';
-import dayjs, { Dayjs } from '@nanase/alnilam/dayjs';
+import { Dayjs } from '@nanase/alnilam/dayjs';
+import { useElapsedTime } from '@nanase/alnilam/use';
 
-const { time, updateInterval = 0.2 } = defineProps<{
+const { time, updateInterval = 2000 } = defineProps<{
   time: Dayjs;
   updateInterval?: number;
 }>();
 
-const elapsedTime = ref<number>(Number.NaN);
-
-function updateElapsedTime() {
-  elapsedTime.value = dayjs().diff(time, 's');
-}
-
-useIntervalFn(updateElapsedTime, () => updateInterval * 1000);
-watch(() => time, updateElapsedTime);
+const elapsedTime = useElapsedTime(
+  () => time,
+  () => updateInterval,
+);
 
 function circleColor(): string {
   if (elapsedTime.value < 60) {

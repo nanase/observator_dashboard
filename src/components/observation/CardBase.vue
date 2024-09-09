@@ -35,7 +35,7 @@ const { observator, name, hidden } = defineProps<{
           <p>Fetched At {{ fromLocale('ja-JP', observator.fetchedAt * 1000).format('YYYY-MM-DD h:mm:ss') }}</p>
         </v-tooltip>
         {{}}
-        <UpdateTime :time="fromLocale('ja-JP', observator.fetchedAt * 1000)" :update-interval="5" />
+        <UpdateTime :time="fromLocale('ja-JP', observator.fetchedAt * 1000)" :update-interval="5000" />
       </div>
     </v-col>
   </v-row>
