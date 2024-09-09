@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, useTemplateRef } from 'vue';
-import { useIntervalFn, useStorage } from '@vueuse/core';
-import axios from '@/lib/axios';
+import { ref, computed, useTemplateRef, watch } from 'vue';
+import { useStorage } from '@vueuse/core';
 import { AppBase, AnimatedClock } from '@nanase/alnilam/components';
-import { computedJSON } from '@nanase/alnilam/use';
-import dayjs, { Dayjs, fromLocale } from '@nanase/alnilam/dayjs';
+import { computedJSON, useIntervalFetch } from '@nanase/alnilam/use';
+import { fromLocale } from '@nanase/alnilam/dayjs';
 import { moveAbove, moveBelow } from '@nanase/alnilam/array';
 
 import type { ObservationResultContainer, ObservatorItem } from '@/type/observator';
@@ -16,20 +15,30 @@ const appBase = useTemplateRef('appBase');
 const importDialog = ref<boolean>();
 const showHiddenObservator = ref<boolean>();
 const observationSequence = ref<number>();
-const fetchedAt = ref<Dayjs>(dayjs(null));
 const observators = useStorage<ObservatorItem[]>('observator', []);
 const shownObservator = computed<ObservatorItem[]>(() => observators.value.filter((o) => !o.hidden));
-const fetchInterval = ref<number>(1000);
-
+const fetchInterval = ref<number>(10 * 1000);
 const savedObservatorJson = computedJSON(observators);
+const { fetchedAt, onFetchResponse, onFetchError, json } = useIntervalFetch(
+  import.meta.env.VITE_DASHBOARD_RESULT_URL,
+  fetchInterval,
+);
 
-useIntervalFn(async () => {
-  try {
-    appBase.value?.closeErrorSnackbar();
-    const container = (await axios.get<ObservationResultContainer>(import.meta.env.VITE_DASHBOARD_RESULT_URL)).data;
-    fetchedAt.value = dayjs();
+onFetchResponse(() => {
+  appBase.value?.closeErrorSnackbar();
+  fetchInterval.value = 10 * 1000;
+});
 
-    if (container.sequence != observationSequence.value) {
+onFetchError((error) => {
+  console.error(`Fetching error. Retrying in 1 minute: ${error}`);
+  appBase.value?.showErrorSnackbar();
+  fetchInterval.value = 60 * 1000;
+});
+
+watch(
+  () => json<ObservationResultContainer>()?.data.value,
+  (container) => {
+    if (container && container.sequence != observationSequence.value) {
       observationSequence.value = container.sequence;
 
       for (const result of container.result) {
@@ -53,14 +62,8 @@ useIntervalFn(async () => {
         }
       }
     }
-
-    fetchInterval.value = 10 * 1000;
-  } catch (error) {
-    console.error(`Fetching error. Retrying in 1 minute: ${error}`);
-    appBase.value?.showErrorSnackbar();
-    fetchInterval.value = 60 * 1000;
-  }
-}, fetchInterval);
+  },
+);
 </script>
 
 <template>
