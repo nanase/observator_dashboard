@@ -42,17 +42,10 @@ watch(
       observationSequence.value = container.sequence;
 
       for (const result of container.result) {
-        const indexInSaved = observators.value.findIndex((o) => o.address === result.address);
+        const knownObservator = observators.value.find((o) => o.address === result.address);
 
-        if (indexInSaved > -1) {
-          observators.value[indexInSaved].result = result;
-          continue;
-        }
-
-        const indexInUnSaved = observators.value.findIndex((o) => o.address === result.address);
-
-        if (indexInUnSaved > -1) {
-          observators.value[indexInUnSaved].result = result;
+        if (knownObservator) {
+          knownObservator.result = result;
         } else {
           observators.value.push({
             address: result.address,
