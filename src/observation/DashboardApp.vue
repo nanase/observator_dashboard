@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, useTemplateRef, watch } from 'vue';
-import { useStorage } from '@vueuse/core';
+import { ref, computed, useTemplateRef } from 'vue';
+import { useStorage, whenever } from '@vueuse/core';
 import { AppBase, AnimatedClock } from '@nanase/alnilam/components';
 import { computedJSON, useIntervalFetch } from '@nanase/alnilam/use';
 import { fromLocale } from '@nanase/alnilam/dayjs';
@@ -35,10 +35,10 @@ onFetchError((error) => {
   fetchInterval.value = 60 * 1000;
 });
 
-watch(
+whenever(
   () => json<ObservationResultContainer>()?.data.value,
   (container) => {
-    if (container && container.sequence != observationSequence.value) {
+    if (container.sequence != observationSequence.value) {
       observationSequence.value = container.sequence;
 
       for (const result of container.result) {
