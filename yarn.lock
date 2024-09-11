@@ -666,14 +666,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nanase/alnilam@https://github.com/nanase/alnilam.git#0.4.6":
-  version: 0.4.6
-  resolution: "@nanase/alnilam@https://github.com/nanase/alnilam.git#commit=038ff44cd620f8e5c795b2d935aeebe5650ed40e"
+"@nanase/alnilam@https://github.com/nanase/alnilam.git#0.4.9":
+  version: 0.4.9
+  resolution: "@nanase/alnilam@https://github.com/nanase/alnilam.git#commit=eaeca5b1c54cd20e6183e6399c8043ed9f5ce4f3"
   dependencies:
     dayjs: "npm:^1.11.13"
     vue: "npm:^3.5.3"
     vuetify: "npm:^3.7.1"
-  checksum: 10c0/225272829c37ccaf6dfdc30fe49578f9206345e67de91949aeb2ebec0dd12ec5bf4f55cd15e0a2ea7d84a5c9ba99d8eeb5a011401b872c3f559db692f5375491
+  checksum: 10c0/b4c0900a7a3ca730f29489b2d21522d11f644db5b3674f6682afcc73c18b3daabc83dfab6792282090013bd45e2500da3b5607d07232ea15586cbc8148c4ff54
   languageName: node
   linkType: hard
 
@@ -1500,9 +1500,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue-macros/volar@npm:0.29.0, @vue-macros/volar@npm:^0.29.0":
-  version: 0.29.0
-  resolution: "@vue-macros/volar@npm:0.29.0"
+"@vue-macros/volar@npm:0.29.1, @vue-macros/volar@npm:^0.29.1":
+  version: 0.29.1
+  resolution: "@vue-macros/volar@npm:0.29.1"
   dependencies:
     "@vue-macros/boolean-prop": "npm:0.4.5"
     "@vue-macros/common": "npm:1.12.3"
@@ -1516,7 +1516,7 @@ __metadata:
   peerDependenciesMeta:
     vue-tsc:
       optional: true
-  checksum: 10c0/b6276edcf42708a7621f7f2042c2f0f3aec80c6cae0736f127e08bbd2b745db3db791ffd91aebc0e47ecc06d27b80f958a4cbc10f552fd9d41c1696e4e15ddd4
+  checksum: 10c0/e39485f1d000c714b5f125b26b926616ac617a36e8efda49b6354e4b67dcc1ffd6863077dbca412cb7ebb93bff3438c6bd014ea44487266e37497ec8c5f195cb
   languageName: node
   linkType: hard
 
@@ -4772,12 +4772,12 @@ __metadata:
   resolution: "observator@workspace:."
   dependencies:
     "@mdi/font": "npm:^7.4.47"
-    "@nanase/alnilam": "https://github.com/nanase/alnilam.git#0.4.6"
+    "@nanase/alnilam": "https://github.com/nanase/alnilam.git#0.4.9"
     "@rushstack/eslint-patch": "npm:^1.10.4"
     "@types/node": "npm:^22.5.4"
     "@vitejs/plugin-vue": "npm:^5.1.3"
     "@vitest/coverage-v8": "npm:^2.0.5"
-    "@vue-macros/volar": "npm:^0.29.0"
+    "@vue-macros/volar": "npm:^0.29.1"
     "@vue/eslint-config-prettier": "npm:^9.0.0"
     "@vue/eslint-config-typescript": "npm:^13.0.0"
     "@vue/tsconfig": "npm:^0.5.1"
@@ -4796,7 +4796,7 @@ __metadata:
     stylelint-config-standard-scss: "npm:^13.1.0"
     stylelint-config-standard-vue: "npm:^1.0.0"
     typescript: "npm:5.6.2"
-    unplugin-vue-macros: "npm:^2.11.10"
+    unplugin-vue-macros: "npm:^2.11.11"
     vite: "npm:^5.4.3"
     vite-plugin-webfont-dl: "npm:^3.9.5"
     vitest: "npm:^2.0.5"
@@ -6346,9 +6346,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"unplugin-vue-macros@npm:^2.11.10":
-  version: 2.11.10
-  resolution: "unplugin-vue-macros@npm:2.11.10"
+"unplugin-vue-macros@npm:^2.11.11":
+  version: 2.11.11
+  resolution: "unplugin-vue-macros@npm:2.11.11"
   dependencies:
     "@vue-macros/better-define": "npm:1.8.5"
     "@vue-macros/boolean-prop": "npm:0.4.5"
@@ -6376,13 +6376,13 @@ __metadata:
     "@vue-macros/short-bind": "npm:1.0.4"
     "@vue-macros/short-emits": "npm:1.5.10"
     "@vue-macros/short-vmodel": "npm:1.4.10"
-    "@vue-macros/volar": "npm:0.29.0"
+    "@vue-macros/volar": "npm:0.29.1"
     unplugin: "npm:^1.14.0"
     unplugin-combine: "npm:^1.0.3"
     unplugin-vue-define-options: "npm:1.4.10"
   peerDependencies:
     vue: ^2.7.0 || ^3.2.25
-  checksum: 10c0/80a2b6c902bfde9941a4a65b3bd6377ebeef1024bfe6b959bb162d7edba75bbca69feedf2db5b7ce3d278bef4d7050bc34a4ba16182ad1633854db9eeb548ac7
+  checksum: 10c0/87779cb275a75ad3a475698a92c674d14e4b3dd356d088a739c2be0633b30fe6d5a593add2d2e6436851c723e6529c1b04911ca39de9fabf353094f693107874
   languageName: node
   linkType: hard
 
