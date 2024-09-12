@@ -37,8 +37,6 @@
     "@vue/eslint-config-typescript": "^13.0.0",
     "@vue/tsconfig": "^0.5.1",
     "@vueuse/core": "^11.0.3",
-    "axios": "^1.7.7",
-    "axios-retry": "^4.5.0",
     "dayjs": "^1.11.13",
     "eslint": "^9.10.0",
     "eslint-plugin-vue": "^9.28.0",
