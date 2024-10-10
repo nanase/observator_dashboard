@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { AppBase, AnimatedClock } from '@nanase/alnilam/components';
-import { moveAbove, moveBelow } from '@nanase/alnilam/array';
 
 import UpdateTime from '@/components/common/UpdateTime.vue';
 import UpdateCircle from '@/components/common/UpdateCircle.vue';
@@ -64,12 +63,12 @@ onMounted(async () => await observationStore.startFetching());
         class="align-self-stretch"
       >
         <ObservatorCard
-          :observator="observator"
+          :observator
           is-saved
           :showMoveAbove="observationStore.observators.length > 1 && index > 0"
           :showMoveBelow="observationStore.observators.length > 1 && index < observationStore.observators.length - 1"
-          @move-above-clicked="moveAbove(observationStore.observators, observator)"
-          @move-below-clicked="moveBelow(observationStore.observators, observator)"
+          @move-above-clicked="observationStore.moveAboveObservator(observator)"
+          @move-below-clicked="observationStore.moveBelowObservator(observator)"
         />
       </v-col>
     </v-row>

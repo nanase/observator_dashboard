@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { moveAbove, moveBelow } from '@nanase/alnilam/array';
 import dayjs, { type Dayjs, fromLocale } from '@nanase/alnilam/dayjs';
 import { useStorage, type RemovableRef } from '@vueuse/core';
 
@@ -88,6 +89,12 @@ export const useObservationStore = defineStore('observation', {
     },
     setObservators(observators: ObservatorItem[]) {
       this.observators = observators;
+    },
+    moveAboveObservator(targetObservator: ObservatorItem) {
+      moveAbove(this.observators, targetObservator);
+    },
+    moveBelowObservator(targetObservator: ObservatorItem) {
+      moveBelow(this.observators, targetObservator);
     },
   },
 });
