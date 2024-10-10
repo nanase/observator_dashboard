@@ -30,6 +30,9 @@ export const useObservationStore = defineStore('observation', {
     shownObservators(): ObservatorItem[] {
       return this.observators.filter((o) => !o.hidden);
     },
+    errorOccurred(): boolean {
+      return typeof this.error !== 'undefined';
+    },
   },
   actions: {
     async fetchContainer() {

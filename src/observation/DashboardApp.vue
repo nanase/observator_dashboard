@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, useTemplateRef, watch, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { AppBase, AnimatedClock } from '@nanase/alnilam/components';
 import { moveAbove, moveBelow } from '@nanase/alnilam/array';
 
@@ -9,19 +9,14 @@ import ObservatorCard from '@/components/observation/ObservatorCard.vue';
 import ImportDialog from './ImportDialog.vue';
 import { useObservationStore } from './store';
 
-const appBase = useTemplateRef('appBase');
 const observationStore = useObservationStore();
 const showHiddenObservator = ref<boolean>();
 
 onMounted(async () => await observationStore.startFetching());
-watch(
-  () => observationStore.error,
-  (error) => (error ? appBase.value?.showErrorSnackbar() : appBase.value?.closeErrorSnackbar()),
-);
 </script>
 
 <template>
-  <AppBase ref="appBase" toolbarTitle="Observation Dashboard">
+  <AppBase toolbarTitle="Observation Dashboard" :error-snackbar-shown="observationStore.errorOccurred">
     <template #toolbarPrepend>
       <AnimatedClock />
     </template>
