@@ -27,14 +27,7 @@ const { observator, name, hidden } = defineProps<{
     <v-col cols="12" class="align-self-end">
       <slot name="status"></slot>
       <div class="queued">
-        <v-tooltip location="bottom">
-          <template v-slot:activator="{ props }">
-            <UpdateCircle v-bind="props" :time="fromLocale('ja-JP', observator.fetchedAt * 1000)" />
-          </template>
-          <p>Sequence #{{ observator.sequence }}</p>
-          <p>Fetched At {{ fromLocale('ja-JP', observator.fetchedAt * 1000).format('YYYY-MM-DD h:mm:ss') }}</p>
-        </v-tooltip>
-        {{}}
+        <UpdateCircle :time="fromLocale('ja-JP', observator.fetchedAt * 1000)" /> {{}}
         <UpdateTime :time="fromLocale('ja-JP', observator.fetchedAt * 1000)" :update-interval="5000" />
       </div>
     </v-col>

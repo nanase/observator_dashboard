@@ -75,15 +75,24 @@ onMounted(async () => await observationStore.startFetching());
     <v-row>
       <v-col cols="12" class="text-right">
         <v-card variant="plain">
-          <v-tooltip v-if="observationStore.fetchedAt.isValid()" location="bottom">
+          <v-menu>
             <template #activator="{ props }">
-              <UpdateCircle v-bind="props" :time="observationStore.fetchedAt" />
+              <UpdateCircle class="cursor-pointer" v-bind="props" :time="observationStore.fetchedAt" /> {{}}
+              <UpdateTime
+                class="cursor-pointer"
+                v-bind="props"
+                :time="observationStore.fetchedAt"
+                :update-interval="5000"
+              />
             </template>
-            <p>Sequence #{{ observationStore.sequence ?? '--' }}</p>
-            <p>Fetched At {{ observationStore.fetchedAt.format('YYYY-MM-DD h:mm:ss') }}</p>
-          </v-tooltip>
-          {{ ' ' }}
-          <UpdateTime :time="observationStore.fetchedAt" :update-interval="5000" />
+
+            <v-list>
+              <v-list-item
+                :title="`Sequence #${observationStore.sequence ?? '--'}`"
+                :subtitle="`Fetched at ${observationStore.fetchedAt.format('YYYY-MM-DD h:mm:ss')}`"
+              />
+            </v-list>
+          </v-menu>
         </v-card>
       </v-col>
     </v-row>

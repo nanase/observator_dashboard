@@ -56,6 +56,14 @@ function is<T extends Observator>(observator: Observator | undefined, targetType
     </template>
 
     <v-list>
+      <template v-if="observator.result">
+        <v-list-item
+          :title="`Sequence #${observator.result.sequence}`"
+          :subtitle="`Fetched at ${fromLocale('ja-JP', observator.result.fetchedAt * 1000).format('YYYY-MM-DD h:mm:ss')}`"
+        />
+        <v-divider />
+      </template>
+
       <v-dialog v-model="detailDialog" max-width="600">
         <template v-slot:activator="{ props: activatorProps }">
           <v-list-item v-bind="activatorProps" title="Details..." prepend-icon="mdi-card-bulleted-outline" />
