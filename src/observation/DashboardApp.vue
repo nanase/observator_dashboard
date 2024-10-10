@@ -1,61 +1,22 @@
 <script setup lang="ts">
-import { ref, computed, useTemplateRef } from 'vue';
-import { useStorage, whenever } from '@vueuse/core';
+import { ref, useTemplateRef, watch, onMounted } from 'vue';
 import { AppBase, AnimatedClock } from '@nanase/alnilam/components';
-import { computedJSON, useIntervalFetch } from '@nanase/alnilam/use';
-import { fromLocale } from '@nanase/alnilam/dayjs';
 import { moveAbove, moveBelow } from '@nanase/alnilam/array';
 
-import type { ObservationResultContainer, ObservatorItem } from '@/type/observator';
 import UpdateTime from '@/components/common/UpdateTime.vue';
 import UpdateCircle from '@/components/common/UpdateCircle.vue';
 import ObservatorCard from '@/components/observation/ObservatorCard.vue';
+import ImportDialog from './ImportDialog.vue';
+import { useObservationStore } from './store';
 
 const appBase = useTemplateRef('appBase');
-const importDialog = ref<boolean>();
+const observationStore = useObservationStore();
 const showHiddenObservator = ref<boolean>();
-const observationSequence = ref<number>();
-const observators = useStorage<ObservatorItem[]>('observator', []);
-const shownObservator = computed<ObservatorItem[]>(() => observators.value.filter((o) => !o.hidden));
-const fetchInterval = ref<number>(10 * 1000);
-const savedObservatorJson = computedJSON(observators);
-const { fetchedAt, onFetchResponse, onFetchError, json } = useIntervalFetch(
-  import.meta.env.VITE_DASHBOARD_RESULT_URL,
-  fetchInterval,
-);
 
-onFetchResponse(() => {
-  appBase.value?.closeErrorSnackbar();
-  fetchInterval.value = 10 * 1000;
-});
-
-onFetchError((error) => {
-  console.error(`Fetching error. Retrying in 1 minute: ${error}`);
-  appBase.value?.showErrorSnackbar();
-  fetchInterval.value = 60 * 1000;
-});
-
-whenever(
-  () => json<ObservationResultContainer>()?.data.value,
-  (container) => {
-    if (container.sequence != observationSequence.value) {
-      observationSequence.value = container.sequence;
-
-      for (const result of container.result) {
-        const knownObservator = observators.value.find((o) => o.address === result.address);
-
-        if (knownObservator) {
-          knownObservator.result = result;
-        } else {
-          observators.value.push({
-            address: result.address,
-            name: result.address,
-            result,
-          });
-        }
-      }
-    }
-  },
+onMounted(async () => await observationStore.startFetching());
+watch(
+  () => observationStore.error,
+  (error) => (error ? appBase.value?.showErrorSnackbar() : appBase.value?.closeErrorSnackbar()),
 );
 </script>
 
@@ -73,26 +34,11 @@ whenever(
         </template>
 
         <v-list>
-          <v-dialog v-model="importDialog" max-width="600">
+          <ImportDialog>
             <template v-slot:activator="{ props: activatorProps }">
               <v-list-item v-bind="activatorProps" title="Export / Import" prepend-icon="mdi-export" />
             </template>
-
-            <v-card prepend-icon="mdi-export" title="Export / Import">
-              <v-card-text>
-                <v-row dense>
-                  <v-col cols="12">
-                    <v-textarea v-model="savedObservatorJson" style="font-family: monospace"></v-textarea>
-                  </v-col>
-                </v-row>
-              </v-card-text>
-              <v-divider></v-divider>
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn text="Close" variant="plain" @click="importDialog = false"></v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-dialog>
+          </ImportDialog>
 
           <v-list-item
             v-if="showHiddenObservator"
@@ -110,38 +56,40 @@ whenever(
       </v-menu>
     </template>
 
-    <v-row class="d-flex" height="100" v-if="shownObservator.length > 0">
+    <v-row class="d-flex" height="100" v-if="observationStore.shownObservators.length > 0">
       <v-col
         cols="6"
         md="4"
         lg="3"
         xl="2"
-        v-for="(observator, index) in showHiddenObservator ? observators : shownObservator"
+        v-for="(observator, index) in showHiddenObservator
+          ? observationStore.observators
+          : observationStore.shownObservators"
         :key="observator.address"
         class="align-self-stretch"
       >
         <ObservatorCard
           :observator="observator"
           is-saved
-          :showMoveAbove="observators.length > 1 && index > 0"
-          :showMoveBelow="observators.length > 1 && index < observators.length - 1"
-          @move-above-clicked="moveAbove(observators, observator)"
-          @move-below-clicked="moveBelow(observators, observator)"
+          :showMoveAbove="observationStore.observators.length > 1 && index > 0"
+          :showMoveBelow="observationStore.observators.length > 1 && index < observationStore.observators.length - 1"
+          @move-above-clicked="moveAbove(observationStore.observators, observator)"
+          @move-below-clicked="moveBelow(observationStore.observators, observator)"
         />
       </v-col>
     </v-row>
     <v-row>
       <v-col cols="12" class="text-right">
         <v-card variant="plain">
-          <v-tooltip v-if="fetchedAt.isValid()" location="bottom">
+          <v-tooltip v-if="observationStore.fetchedAt.isValid()" location="bottom">
             <template v-slot:activator="{ props }">
-              <UpdateCircle v-bind="props" :time="fetchedAt" />
+              <UpdateCircle v-bind="props" :time="observationStore.fetchedAt" />
             </template>
-            <p>Sequence #{{ observationSequence ?? '--' }}</p>
-            <p>Fetched At {{ fetchedAt.format('YYYY-MM-DD h:mm:ss') }}</p>
+            <p>Sequence #{{ observationStore.sequence ?? '--' }}</p>
+            <p>Fetched At {{ observationStore.fetchedAt.format('YYYY-MM-DD h:mm:ss') }}</p>
           </v-tooltip>
           {{ ' ' }}
-          <UpdateTime :time="fromLocale('ja-JP', fetchedAt)" :update-interval="5000" />
+          <UpdateTime :time="observationStore.fetchedAt" :update-interval="5000" />
         </v-card>
       </v-col>
     </v-row>
