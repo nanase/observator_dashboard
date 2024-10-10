@@ -22,7 +22,7 @@ onMounted(async () => await observationStore.startFetching());
     </template>
     <template #toolbarAppend>
       <v-menu>
-        <template v-slot:activator="{ props }">
+        <template #activator="{ props }">
           <v-btn icon v-bind="props">
             <v-icon>mdi-dots-vertical</v-icon>
           </v-btn>
@@ -30,7 +30,7 @@ onMounted(async () => await observationStore.startFetching());
 
         <v-list>
           <ImportDialog>
-            <template v-slot:activator="{ props: activatorProps }">
+            <template #activator="{ props: activatorProps }">
               <v-list-item v-bind="activatorProps" title="Export / Import" prepend-icon="mdi-export" />
             </template>
           </ImportDialog>
@@ -77,7 +77,7 @@ onMounted(async () => await observationStore.startFetching());
       <v-col cols="12" class="text-right">
         <v-card variant="plain">
           <v-tooltip v-if="observationStore.fetchedAt.isValid()" location="bottom">
-            <template v-slot:activator="{ props }">
+            <template #activator="{ props }">
               <UpdateCircle v-bind="props" :time="observationStore.fetchedAt" />
             </template>
             <p>Sequence #{{ observationStore.sequence ?? '--' }}</p>
