@@ -59,7 +59,7 @@ function is<T extends Observator>(observator: Observator | undefined, targetType
       <template v-if="observator.result">
         <v-list-item
           :title="`Sequence #${observator.result.sequence}`"
-          :subtitle="`Fetched at ${fromLocale('ja-JP', observator.result.fetchedAt * 1000).format('YYYY-MM-DD h:mm:ss')}`"
+          :subtitle="`Fetched at ${fromLocale('ja-JP', observator.result.fetchedAt * 1000).format('YYYY-MM-DD H:mm:ss')}`"
         />
         <v-divider />
       </template>
@@ -91,7 +91,7 @@ function is<T extends Observator>(observator: Observator | undefined, targetType
               <v-row no-gutters>
                 <v-col cols="4">Last fetched at</v-col>
                 <v-col>
-                  {{ fromLocale('ja-JP', observator.result.fetchedAt * 1000).format('YYYY-MM-DD h:mm:ss') }}
+                  {{ fromLocale('ja-JP', observator.result.fetchedAt * 1000).format('YYYY-MM-DD H:mm:ss') }}
                   ({{ now.diff(fromLocale('ja-JP', observator.result.fetchedAt * 1000), 's') }}s ago)
                 </v-col>
               </v-row>

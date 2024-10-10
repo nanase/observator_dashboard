@@ -89,7 +89,7 @@ onMounted(async () => await observationStore.startFetching());
             <v-list>
               <v-list-item
                 :title="`Sequence #${observationStore.sequence ?? '--'}`"
-                :subtitle="`Fetched at ${observationStore.fetchedAt.format('YYYY-MM-DD h:mm:ss')}`"
+                :subtitle="`Fetched at ${observationStore.fetchedAt.format('YYYY-MM-DD H:mm:ss')}`"
               />
             </v-list>
           </v-menu>
