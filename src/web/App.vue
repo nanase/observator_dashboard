@@ -1,88 +1,246 @@
 <script setup lang="ts">
-// フェーズ 4 で本来の画面に置き換えるまでの、受信確認用の仮画面
-import { onMounted, onUnmounted, ref } from 'vue';
-import type { LatestResponse } from '../shared/api';
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+import { useNow } from './composables/useNow';
+import { useObservations } from './composables/useObservations';
+import { formatAgo, formatDateLong, formatTime } from './lib/format';
+import { icons } from './lib/icons';
 
-const latest = ref<LatestResponse | null>(null);
-const error = ref<string | null>(null);
-let timer: ReturnType<typeof setInterval> | undefined;
+const route = useRoute();
+const now = useNow();
+const { latest, fetchedAt, error, sessionExpired } = useObservations();
 
-async function refresh() {
-  try {
-    const response = await fetch('/api/latest');
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    latest.value = await response.json();
-    error.value = null;
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e);
-  }
+const bare = computed(() => route.meta.bare === true);
+const pendingCount = computed(() => latest.value?.pendingCount ?? 0);
+
+function relogin() {
+  location.reload();
 }
-
-function formatTime(ts: number): string {
-  return new Date(ts * 1000).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
-}
-
-function format(value: number | null | undefined, digits: number): string {
-  return value === null || value === undefined ? '-' : value.toFixed(digits);
-}
-
-onMounted(() => {
-  refresh();
-  timer = setInterval(refresh, 30_000);
-});
-onUnmounted(() => clearInterval(timer));
 </script>
 
 <template>
-  <main>
-    <h1>Observator</h1>
-    <p v-if="error">取得に失敗しました: {{ error }}</p>
-    <p v-if="latest && latest.pendingCount > 0">承認待ちのデバイスが {{ latest.pendingCount }} 台あります</p>
-    <table v-if="latest">
-      <thead>
-        <tr>
-          <th>名前</th>
-          <th>温度</th>
-          <th>湿度</th>
-          <th>気圧</th>
-          <th>CO2</th>
-          <th>電池</th>
-          <th>最終受信</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="device in latest.devices" :key="device.id">
-          <td>{{ device.name ?? device.address }}</td>
-          <td>{{ format(device.lastReading?.temperature, 1) }} ℃</td>
-          <td>{{ format(device.lastReading?.humidity, 0) }} %</td>
-          <td>{{ format(device.lastReading?.pressure, 1) }} hPa</td>
-          <td>{{ format(device.lastReading?.co2, 0) }} ppm</td>
-          <td>{{ format(device.lastReading?.battery, 0) }} %</td>
-          <td>{{ formatTime(device.lastSeenAt) }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </main>
+  <div v-if="sessionExpired" class="session" role="alert">
+    <component :is="icons.warning" />
+    ログインの有効期限が切れました。
+    <button type="button" class="btn filled" @click="relogin">ログインし直す</button>
+  </div>
+
+  <RouterView v-if="bare" />
+
+  <div v-else class="wrap">
+    <div class="app">
+      <header class="topbar">
+        <RouterLink to="/" class="brand">
+          <span class="logo" aria-hidden="true"><component :is="icons.sensors" /></span>
+          <h1>Observator</h1>
+        </RouterLink>
+        <div class="clock">
+          <span class="date">{{ formatDateLong(now) }}</span>
+          <span class="time">{{ formatTime(now) }}</span>
+          <span v-if="fetchedAt" class="ago"
+            ><component :is="icons.update" />{{ formatAgo(now - fetchedAt) }}に更新</span
+          >
+        </div>
+        <div class="actions">
+          <RouterLink
+            to="/devices"
+            class="icon-btn"
+            :aria-label="pendingCount ? `承認待ちのデバイス ${pendingCount} 台` : 'デバイスの管理'"
+            :title="pendingCount ? `承認待ち ${pendingCount} 台` : '承認待ちはありません'"
+          >
+            <component :is="icons['how-to-reg']" />
+            <span v-if="pendingCount" class="badge">{{ pendingCount }}</span>
+          </RouterLink>
+        </div>
+      </header>
+      <nav class="tabs" aria-label="画面">
+        <RouterLink to="/" :aria-current="route.path === '/' ? 'page' : undefined">
+          <component :is="icons.dashboard" />ダッシュボード
+        </RouterLink>
+        <RouterLink to="/charts" :aria-current="route.path === '/charts' ? 'page' : undefined">
+          <component :is="icons['show-chart']" />グラフ
+        </RouterLink>
+        <RouterLink to="/devices" :aria-current="route.path === '/devices' ? 'page' : undefined">
+          <component :is="icons.devices" />デバイス
+        </RouterLink>
+        <RouterLink to="/mini"><component :is="icons.smartphone" />ミニマル</RouterLink>
+      </nav>
+      <main class="content">
+        <p v-if="error" class="error">最新の値を取得できませんでした（{{ error }}）。30 秒後に再試行します。</p>
+        <RouterView />
+      </main>
+    </div>
+  </div>
 </template>
 
-<style>
-:root {
-  color-scheme: light dark;
-  font-family: system-ui, sans-serif;
+<style scoped>
+.wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 16px;
 }
-
-table {
-  border-collapse: collapse;
+@media (max-width: 599px) {
+  .wrap {
+    padding: 0;
+  }
+  .app {
+    border-radius: 0 !important;
+  }
 }
-
-th,
-td {
-  padding: 0.25rem 0.75rem;
-  text-align: right;
+.app {
+  background: var(--surface);
+  border-radius: 24px;
+  border: 1px solid var(--card-border);
+  min-height: calc(100vh - 32px);
 }
-
-td:first-child,
-th:first-child {
-  text-align: left;
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 12px 16px 0;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+.logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  font-size: 24px;
+}
+.brand h1 {
+  font-size: 22px;
+  font-weight: 500;
+}
+.clock {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-left: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.date {
+  color: var(--on-surface-variant);
+  font-size: 13px;
+}
+.time {
+  font-size: 22px;
+  font-weight: 500;
+}
+.ago {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--on-surface-variant);
+  font-size: 13px;
+}
+.ago svg {
+  font-size: 16px;
+}
+.actions {
+  display: flex;
+  align-items: center;
+}
+.badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--error);
+  color: var(--on-primary);
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+}
+@media (max-width: 599px) {
+  .clock {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+    padding: 0 0 4px 52px;
+    gap: 8px;
+  }
+  .time {
+    font-size: 18px;
+  }
+  .actions {
+    margin-left: auto;
+  }
+}
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px 16px 0;
+  border-bottom: 1px solid var(--hairline);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 12px 10px;
+  text-decoration: none;
+  color: var(--on-surface-variant);
+  font-weight: 500;
+  font-size: 14px;
+  border-bottom: 3px solid transparent;
+  border-radius: 3px 3px 0 0;
+  white-space: nowrap;
+}
+.tabs a svg {
+  font-size: 18px;
+}
+.tabs a[aria-current='page'] {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+.tabs a:hover {
+  background: var(--state-hover);
+}
+.content {
+  padding: 16px;
+}
+@media (min-width: 720px) {
+  .content {
+    padding: 20px 24px 24px;
+  }
+}
+.error {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--error-container);
+  color: var(--on-error-container);
+}
+.session {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 12px;
+  padding: 10px 16px;
+  background: var(--error-container);
+  color: var(--on-error-container);
+}
+.session svg {
+  font-size: 20px;
 }
 </style>

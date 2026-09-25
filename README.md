@@ -17,6 +17,7 @@ bun run dev
 ```
 
 - 開発サーバは `http://localhost:15173/` で動く
+- 例示データを入れるときは `node scripts/seed-local.mjs > .wrangler/seed.sql` のあと `bunx wrangler d1 execute DB --local --file .wrangler/seed.sql` を実行する
 - `.dev.vars` の `DEV_AUTH_EMAIL` を設定すると、localhost からのアクセスに限り Access の検証を省く
 
 | コマンド                    | 内容                                            |

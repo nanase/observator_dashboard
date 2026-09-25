@@ -1,0 +1,20 @@
+{
+  "name": "Observator",
+  "short_name": "Observator",
+  "description": "自宅の温度・湿度・CO2",
+  "lang": "ja",
+  "start_url": "/mini",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#eceff5",
+  "theme_color": "#0061a4",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "ダッシュボード", "url": "/" },
+    { "name": "グラフ", "url": "/charts" }
+  ]
+}
