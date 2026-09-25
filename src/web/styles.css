@@ -49,8 +49,9 @@
   --s6: #008300;
   --font: 'Roboto', 'Noto Sans JP', system-ui, -apple-system, 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', sans-serif;
 }
+/* 手動で選んだテーマが OS の設定より優先される */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     color-scheme: dark;
     --primary: #9ecaff;
     --on-primary: #003258;
@@ -95,6 +96,51 @@
     --s5: #d55181;
     --s6: #008300;
   }
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --primary: #9ecaff;
+  --on-primary: #003258;
+  --primary-container: #00497d;
+  --on-primary-container: #d1e4ff;
+  --secondary-container: #3b4858;
+  --on-secondary-container: #d7e3f7;
+  --bg: #111418;
+  --surface: #111418;
+  --card: #1d2024;
+  --card-stale: #171a1e;
+  --surface-high: #282a2f;
+  --surface-highest: #33353a;
+  --on-surface: #e1e2e8;
+  --on-surface-variant: #c3c7cf;
+  --muted: #999da5;
+  --outline: #8d9199;
+  --outline-variant: #43474e;
+  --hairline: #2c2f34;
+  --card-border: #2a2d32;
+  --error: #ffb4ab;
+  --error-container: #93000a;
+  --on-error-container: #ffdad6;
+  --warn: #f5bf48;
+  --warn-container: #5c4200;
+  --on-warn-container: #ffdf9e;
+  --tooltip-bg: #e1e2e8;
+  --tooltip-fg: #2e3135;
+  --tooltip-muted: #43474e;
+  --shadow: none;
+  --shadow-high: 0 0 0 1px #3a3d43, 0 4px 12px rgba(0, 0, 0, 0.5);
+  --state-hover: rgba(225, 226, 232, 0.08);
+  --band-op: 0.24;
+  --wash-op: 0.14;
+  --range-wash: rgba(80, 200, 80, 0.12);
+  --range-line: rgba(80, 200, 80, 0.5);
+  --gap-wash: #24272c;
+  --s1: #3987e5;
+  --s2: #d95926;
+  --s3: #199e70;
+  --s4: #c98500;
+  --s5: #d55181;
+  --s6: #008300;
 }
 
 *,

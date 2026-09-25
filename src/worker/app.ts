@@ -1,14 +1,7 @@
 import { Hono } from 'hono';
 import type { LatestResponse } from '../shared/api';
 import { createAccessVerifier, isLocalHost, principalFromPayload, type AccessVerifier, type Principal } from './auth';
-import {
-  countPendingDevices,
-  importLegacyDevices,
-  listDevices,
-  parseDevicePatch,
-  parseLegacyExport,
-  updateDevice,
-} from './devices';
+import { countPendingDevices, listDevices, parseDevicePatch, updateDevice } from './devices';
 import { ingest, parseIngestRequest } from './ingest';
 import { parseSeriesQuery, querySeries } from './series';
 import { nowSeconds } from './time';
@@ -97,12 +90,6 @@ export function createApp(options: AppOptions = {}) {
 
     const device = await updateDevice(c.env.DB, Number(c.req.param('id')), patch, nowSeconds());
     return device === null ? c.json({ error: 'not found' }, 404) : c.json(device);
-  });
-
-  app.post('/devices/import', async (c) => {
-    const items = parseLegacyExport(await readJson(c.req.raw));
-    if (typeof items === 'string') return c.json({ error: items }, 400);
-    return c.json({ imported: await importLegacyDevices(c.env.DB, items, nowSeconds()) });
   });
 
   app.notFound((c) => c.json({ error: 'not found' }, 404));

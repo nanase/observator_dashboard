@@ -86,7 +86,18 @@ const today = computed(() => {
         <h3>{{ name }}</h3>
         <p class="sub">{{ kindLabel(device.kind) }}</p>
       </div>
-      <ReceptionStatus :last-seen-at="device.lastSeenAt" />
+      <div class="meta">
+        <ReceptionStatus :last-seen-at="device.lastSeenAt" />
+        <div class="signal">
+          <span v-if="battery !== null" class="it" :class="{ warn: battery < BATTERY_LOW }" :title="`電池 ${battery}%`">
+            <component :is="icons[batteryIcon(battery)]" /><span class="sr">電池 </span>{{ battery }}%
+          </span>
+          <span v-if="rssi !== null" class="it" :title="central ? 'Wi-Fi の電波' : 'BLE の電波'">
+            <component :is="icons[signalIcon(rssi, central)]" /><span class="sr">電波 </span
+            >{{ formatNumber(rssi, 0) }} dBm
+          </span>
+        </div>
+      </div>
     </div>
 
     <div class="body">
@@ -100,6 +111,18 @@ const today = computed(() => {
               <span class="num">{{ formatNumber(temperature, 1) }}</span
               ><span class="unit">℃</span>
             </div>
+          </div>
+          <div class="hilo">
+            <span title="今日の最高">
+              <component :is="icons['arrow-upward']" /><span class="sr">今日の最高 </span>
+              <b>{{ formatNumber(today?.max.v, 1) }}</b
+              >℃<time v-if="today">{{ formatTime(today.max.t) }}</time>
+            </span>
+            <span title="今日の最低">
+              <component :is="icons['arrow-downward']" /><span class="sr">今日の最低 </span>
+              <b>{{ formatNumber(today?.min.v, 1) }}</b
+              >℃<time v-if="today">{{ formatTime(today.min.t) }}</time>
+            </span>
           </div>
           <div>
             <span class="lbl">湿度</span>
@@ -138,27 +161,6 @@ const today = computed(() => {
               <div class="v">{{ formatNumber(pressure.local, 1) }}<small>hPa</small></div>
               <div class="note">標高を設定すると海面気圧を出します</div>
             </template>
-          </div>
-        </div>
-
-        <div class="hilo dim">
-          <div>
-            <component :is="icons['arrow-upward']" />
-            <span>
-              <span class="k">今日の最高</span><br />
-              <span class="v">{{ formatNumber(today?.max.v, 1) }}</span
-              ><span class="k"> ℃</span>
-              <span v-if="today" class="at"> {{ formatTime(today.max.t) }}</span>
-            </span>
-          </div>
-          <div>
-            <component :is="icons['arrow-downward']" />
-            <span>
-              <span class="k">今日の最低</span><br />
-              <span class="v">{{ formatNumber(today?.min.v, 1) }}</span
-              ><span class="k"> ℃</span>
-              <span v-if="today" class="at"> {{ formatTime(today.min.t) }}</span>
-            </span>
           </div>
         </div>
       </div>
@@ -205,20 +207,10 @@ const today = computed(() => {
       </div>
       <div>
         <div class="k"><component :is="icons.mood" />不快指数</div>
-        <div class="v">{{ formatNumber(derived.di, 0) }}</div>
-        <div class="d">{{ derived.diLabel }}</div>
+        <div class="v">
+          {{ formatNumber(derived.di, 0) }}<span class="d">{{ derived.diLabel }}</span>
+        </div>
       </div>
-    </div>
-
-    <div class="status">
-      <span v-if="central" class="it" title="電源"><component :is="icons.power" />常時給電</span>
-      <span v-else-if="battery !== null" class="it" :class="{ warn: battery < BATTERY_LOW }" title="電池">
-        <component :is="icons[batteryIcon(battery)]" /><span class="sr">電池 </span>{{ battery }}%
-        <template v-if="battery < BATTERY_LOW">残量少</template>
-      </span>
-      <span v-if="rssi !== null" class="it" :title="central ? 'Wi-Fi の電波' : 'BLE の電波'">
-        <component :is="icons[signalIcon(rssi, central)]" /><span class="sr">電波 </span>{{ formatNumber(rssi, 0) }} dBm
-      </span>
     </div>
   </article>
 </template>
@@ -257,6 +249,68 @@ const today = computed(() => {
   flex: none;
   background: color-mix(in srgb, var(--c) 18%, var(--card));
   font-size: 22px;
+}
+.meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.signal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 2px 10px;
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  white-space: nowrap;
+}
+.signal .it {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.signal svg {
+  font-size: 16px;
+}
+.signal .it.warn {
+  color: var(--on-warn-container);
+  background: var(--warn-container);
+  border-radius: 6px;
+  padding: 0 6px 0 2px;
+}
+.hilo {
+  display: grid;
+  gap: 2px;
+  padding-bottom: 4px;
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  white-space: nowrap;
+}
+.hilo > span {
+  display: inline-flex;
+  align-items: baseline;
+}
+.hilo svg {
+  font-size: 14px;
+  align-self: center;
+  margin-right: 2px;
+}
+.hilo b {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--on-surface);
+  margin-right: 1px;
+}
+.hilo time {
+  margin-left: 8px;
+  color: var(--muted);
+}
+.derived .v .d {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 6px;
 }
 .ttl {
   min-width: 0;
@@ -408,34 +462,6 @@ const today = computed(() => {
   font-weight: 500;
 }
 
-.hilo {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-.hilo > div {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-.hilo svg {
-  font-size: 18px;
-  color: var(--on-surface-variant);
-}
-.hilo .k {
-  font-size: 12px;
-  color: var(--on-surface-variant);
-}
-.hilo .v {
-  font-size: 16px;
-  font-weight: 500;
-}
-.hilo .at {
-  font-size: 12px;
-  color: var(--muted);
-}
-
 .derived {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -468,42 +494,14 @@ const today = computed(() => {
   font-size: 16px;
   font-weight: 500;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .derived .v small {
   font-size: 12px;
   font-weight: 400;
   color: var(--on-surface-variant);
   margin-left: 1px;
-}
-.derived .d {
-  font-size: 11px;
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.status {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
-  font-size: 13px;
-  color: var(--on-surface-variant);
-  margin-top: auto;
-}
-.status .it {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.status svg {
-  font-size: 18px;
-}
-.status .it.warn {
-  color: var(--on-warn-container);
-  background: var(--warn-container);
-  border-radius: 8px;
-  padding: 2px 8px 2px 4px;
 }
 
 @media (min-width: 720px) {

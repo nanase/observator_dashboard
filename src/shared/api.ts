@@ -83,11 +83,3 @@ export interface SeriesResponse {
   to: number;
   series: Series[];
 }
-
-// 旧ダッシュボードの「Export」が出力する JSON の要素
-export interface LegacyObservatorItem {
-  address: string;
-  name?: string;
-  hidden?: boolean;
-  result?: { type?: string };
-}

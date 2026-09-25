@@ -100,9 +100,26 @@ const areaPath = computed(() =>
 const last = computed(() => points.value[points.value.length - 1] ?? null);
 const trailingGap = computed(() => (last.value && props.to - last.value.t > GAP_SECONDS ? x(last.value.t) + 3 : null));
 
+// 右端の「いま」と重なる時刻の目盛りは出さない
+const LABEL_CLEARANCE = 30;
 const hours = computed(() =>
-  [0, 6, 12, 18].map((h) => ({ h, t: props.dayStart + h * 3600 })).filter(({ t }) => t >= props.from && t <= props.to),
+  [0, 6, 12, 18]
+    .map((h) => ({ h, t: props.dayStart + h * 3600 }))
+    .filter(({ t }) => t >= props.from && t <= props.to && x(t) < width.value - LABEL_CLEARANCE),
 );
+
+// 日付が変わった直後は最高・最低が右端に寄るので、重なる数値ラベルは出さない
+const markerLabels = computed(() => {
+  const m = props.markers;
+  if (!m) return null;
+  const maxX = x(m.max.t);
+  const minX = x(m.min.t);
+  const clear = (px: number) => px < width.value - LABEL_CLEARANCE;
+  return {
+    max: clear(maxX) ? { x: maxX, y: y(m.max.v) - 8 } : null,
+    min: clear(minX) && Math.abs(minX - maxX) > 24 ? { x: minX + 8, y: y(m.min.v) + 4 } : null,
+  };
+});
 
 const rangeBand = computed(() => {
   if (!props.range || (props.range.min == null && props.range.max == null)) return null;
@@ -174,11 +191,17 @@ function onPointerMove(e: PointerEvent) {
       <path :d="linePath" class="line" :style="{ stroke: color }" />
       <template v-if="markers">
         <circle :cx="x(markers.max.t)" :cy="y(markers.max.v)" r="4" class="marker" :style="{ fill: color }" />
-        <text class="label" :x="x(markers.max.t)" :y="y(markers.max.v) - 8" text-anchor="middle">
+        <text
+          v-if="markerLabels?.max"
+          class="label"
+          :x="markerLabels.max.x"
+          :y="markerLabels.max.y"
+          text-anchor="middle"
+        >
           {{ formatNumber(markers.max.v, digits) }}
         </text>
         <circle :cx="x(markers.min.t)" :cy="y(markers.min.v)" r="4" class="marker" :style="{ fill: color }" />
-        <text class="label" :x="x(markers.min.t) + 8" :y="y(markers.min.v) + 4">
+        <text v-if="markerLabels?.min" class="label" :x="markerLabels.min.x" :y="markerLabels.min.y">
           {{ formatNumber(markers.min.v, digits) }}
         </text>
       </template>

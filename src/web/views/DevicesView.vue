@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import type { Device, DevicePatch, DeviceStatus, LegacyObservatorItem } from '../../shared/api';
+import type { Device, DevicePatch, DeviceStatus } from '../../shared/api';
 import { DEVICE_ICONS } from '../../shared/icons';
 import ReceptionStatus from '../components/ReceptionStatus.vue';
 import { handleApiError, invalidateObservations } from '../composables/useObservations';
@@ -26,20 +26,29 @@ async function load() {
 }
 onMounted(load);
 
-const byStatus = (status: DeviceStatus) => devices.value.filter((d) => d.status === status);
+const byStatus = (status: DeviceStatus) =>
+  devices.value.filter((d) => d.status === status).sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id);
 const pending = computed(() => byStatus('pending'));
 const active = computed(() => byStatus('active'));
 const ignored = computed(() => byStatus('ignored'));
 
+async function save(device: Device, patch: DevicePatch) {
+  const updated = await api.updateDevice(device.id, patch);
+  devices.value = devices.value.map((d) => (d.id === updated.id ? updated : d));
+}
+
+function showSaved(id: number) {
+  saved.value = id;
+  setTimeout(() => {
+    if (saved.value === id) saved.value = null;
+  }, 2000);
+}
+
 async function update(device: Device, patch: DevicePatch) {
   try {
-    const updated = await api.updateDevice(device.id, patch);
-    devices.value = devices.value.map((d) => (d.id === updated.id ? updated : d));
+    await save(device, patch);
     error.value = null;
-    saved.value = device.id;
-    setTimeout(() => {
-      if (saved.value === device.id) saved.value = null;
-    }, 2000);
+    showSaved(device.id);
     await invalidateObservations();
   } catch (e) {
     error.value = handleApiError(e);
@@ -58,8 +67,17 @@ async function move(device: Device, offset: -1 | 1) {
   const j = i + offset;
   if (j < 0 || j >= list.length) return;
   [list[i], list[j]] = [list[j], list[i]];
-  for (const [index, d] of list.entries()) {
-    if (d.sortOrder !== index) await update(d, { sortOrder: index });
+  try {
+    // 並び順を 0 から振り直し、変わったものだけを保存する
+    for (const [index, d] of list.entries()) {
+      if (d.sortOrder !== index) await save(d, { sortOrder: index });
+    }
+    error.value = null;
+    showSaved(device.id);
+    await invalidateObservations();
+  } catch (e) {
+    error.value = handleApiError(e);
+    await load();
   }
 }
 
@@ -78,28 +96,6 @@ function updateNumber(device: Device, key: 'altitudeM' | 'temperatureMin' | 'tem
     return;
   }
   if (value !== device[key]) update(device, { [key]: value });
-}
-
-const legacyText = ref('');
-const legacyResult = ref<string | null>(null);
-async function importLegacy() {
-  let items: LegacyObservatorItem[];
-  try {
-    items = JSON.parse(legacyText.value);
-  } catch {
-    legacyResult.value =
-      'JSON として読めませんでした。旧ダッシュボードの「Export」で出力した内容を貼り付けてください。';
-    return;
-  }
-  try {
-    const { imported } = await api.importLegacy(items);
-    legacyResult.value = `${imported} 台を取り込みました。`;
-    legacyText.value = '';
-    await load();
-    await invalidateObservations();
-  } catch (e) {
-    legacyResult.value = handleApiError(e);
-  }
 }
 
 const summary = (d: Device) => {
@@ -277,24 +273,6 @@ const summary = (d: Device) => {
         </div>
       </article>
     </section>
-
-    <details class="group legacy">
-      <summary>旧ダッシュボードから名前と並び順を取り込む</summary>
-      <p class="lead">
-        旧ダッシュボードのメニューにある「Export」で表示された JSON
-        を貼り付けます。取り込んだデバイスは承認済みになります。
-      </p>
-      <label class="field">
-        JSON
-        <textarea id="legacy" v-model="legacyText" spellcheck="false"></textarea>
-      </label>
-      <div class="edit-actions">
-        <button type="button" class="btn filled" :disabled="legacyText.trim() === ''" @click="importLegacy">
-          <component :is="icons.upload" />取り込む
-        </button>
-        <span v-if="legacyResult" class="hint">{{ legacyResult }}</span>
-      </div>
-    </details>
   </div>
 </template>
 
@@ -422,9 +400,5 @@ const summary = (d: Device) => {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 12px;
-}
-.legacy summary {
-  cursor: pointer;
-  color: var(--on-surface-variant);
 }
 </style>

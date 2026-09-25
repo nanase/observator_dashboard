@@ -47,7 +47,7 @@ const rows = computed(() =>
       <b>Observator</b>
       <span class="u">
         <component :is="icons.update" />{{ formatTime(now) }}
-        <template v-if="fetchedAt">・{{ formatAgo(now - fetchedAt) }}に更新</template>
+        <template v-if="fetchedAt">・{{ formatAgo(now - fetchedAt) }}</template>
       </span>
       <RouterLink to="/" class="icon-btn" aria-label="ダッシュボードを開く"
         ><component :is="icons.dashboard"

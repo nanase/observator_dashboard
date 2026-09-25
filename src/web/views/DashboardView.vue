@@ -41,16 +41,11 @@ const alerts = computed(() => {
   }
   return out;
 });
-
-const receiving = computed(() => shownDevices.value.filter((d) => now.value - d.lastSeenAt <= STALE_SECONDS).length);
 </script>
 
 <template>
   <div class="dashboard">
-    <div v-if="latest" class="alerts">
-      <span class="chip ok"
-        ><component :is="icons['check-circle']" />受信中 {{ receiving }} / {{ shownDevices.length }} 台</span
-      >
+    <div v-if="latest && (latest.pendingCount > 0 || alerts.length)" class="alerts">
       <RouterLink v-if="latest.pendingCount > 0" to="/devices" class="chip warn">
         <component :is="icons['how-to-reg']" />承認待ちのデバイスが {{ latest.pendingCount }} 台あります
       </RouterLink>
@@ -75,7 +70,7 @@ const receiving = computed(() => shownDevices.value.filter((d) => now.value - d.
       <span><i class="dot"></i>3 分以内に受信</span>
       <span><i class="dot warn"></i>5 分以内</span>
       <span><i class="dot bad"></i>5 分以上（途絶）</span>
-      <span>経過時間を押すと受信時刻が出ます。グラフの点は今日の最高と最低</span>
+      <span>経過時間を押すと受信時刻が出ます。↑↓ は今日の最高と最低</span>
     </div>
   </div>
 </template>

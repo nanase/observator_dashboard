@@ -1,4 +1,4 @@
-import type { Device, DevicePatch, DeviceStatus, LastReading, LegacyObservatorItem } from '../shared/api';
+import type { Device, DevicePatch, DeviceStatus, LastReading } from '../shared/api';
 import { isDeviceIcon, type DeviceIcon } from '../shared/icons';
 import { METRIC_RANGES } from '../shared/metrics';
 
@@ -140,55 +140,4 @@ export async function updateDevice(
     .bind(...values, now, id)
     .first<DeviceRow>();
   return row === null ? null : toDevice(row);
-}
-
-// 旧ダッシュボードの種別名は実機と食い違っていたので読み替える
-const LEGACY_KIND_ALIASES: Record<string, string> = { W3200010: 'W3400010' };
-
-export function parseLegacyExport(body: unknown): LegacyObservatorItem[] | string {
-  if (!Array.isArray(body)) return 'body must be an array';
-  if (body.length > 100) return 'too many items';
-
-  const items: LegacyObservatorItem[] = [];
-  for (const entry of body) {
-    if (typeof entry !== 'object' || entry === null) return 'each item must be an object';
-    const { address, name, hidden, result } = entry as Record<string, unknown>;
-    if (typeof address !== 'string' || !MAC_ADDRESS_PATTERN.test(address.toLowerCase())) {
-      return 'each item must have a valid address';
-    }
-    items.push({
-      address: address.toLowerCase(),
-      name: typeof name === 'string' ? name.trim().slice(0, 64) : undefined,
-      hidden: hidden === true,
-      result:
-        typeof result === 'object' && result !== null && typeof (result as { type?: unknown }).type === 'string'
-          ? { type: (result as { type: string }).type }
-          : undefined,
-    });
-  }
-  return items;
-}
-
-// 取り込んだデバイスは承認済みとし、並び順は配列の順に従う
-export async function importLegacyDevices(db: D1Database, items: LegacyObservatorItem[], now: number): Promise<number> {
-  const statements = items.map((item, index) => {
-    const legacyKind = item.result?.type;
-    const kind = legacyKind === undefined ? 'unknown' : (LEGACY_KIND_ALIASES[legacyKind] ?? legacyKind);
-    const name = item.name === undefined || item.name === '' || item.name === item.address ? null : item.name;
-
-    return db
-      .prepare(
-        `INSERT INTO devices (address, kind, status, name, sort_order, hidden, first_seen_at, updated_at)
-         VALUES (?1, ?2, 'active', ?3, ?4, ?5, ?6, ?6)
-         ON CONFLICT (address) DO UPDATE SET
-           status = 'active', name = excluded.name, sort_order = excluded.sort_order,
-           hidden = excluded.hidden, updated_at = excluded.updated_at`,
-      )
-      .bind(item.address, kind, name, index, Number(item.hidden === true), now);
-  });
-
-  if (statements.length > 0) {
-    await db.batch(statements);
-  }
-  return statements.length;
 }

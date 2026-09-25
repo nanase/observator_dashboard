@@ -3,12 +3,20 @@ import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useNow } from './composables/useNow';
 import { useObservations } from './composables/useObservations';
+import { useTheme } from './composables/useTheme';
 import { formatAgo, formatDateLong, formatTime } from './lib/format';
 import { icons } from './lib/icons';
+import { STALE_SECONDS } from './lib/status';
 
 const route = useRoute();
 const now = useNow();
-const { latest, fetchedAt, error, sessionExpired } = useObservations();
+const { latest, shownDevices, fetchedAt, error, sessionExpired } = useObservations();
+const theme = useTheme();
+
+const THEME_LABELS = { system: 'デバイスの設定', light: 'ライト', dark: 'ダーク' } as const;
+const THEME_ICONS = { system: 'brightness-auto', light: 'light-mode', dark: 'dark-mode' } as const;
+
+const receiving = computed(() => shownDevices.value.filter((d) => now.value - d.lastSeenAt <= STALE_SECONDS).length);
 
 const bare = computed(() => route.meta.bare === true);
 const pendingCount = computed(() => latest.value?.pendingCount ?? 0);
@@ -37,11 +45,24 @@ function relogin() {
         <div class="clock">
           <span class="date">{{ formatDateLong(now) }}</span>
           <span class="time">{{ formatTime(now) }}</span>
-          <span v-if="fetchedAt" class="ago"
-            ><component :is="icons.update" />{{ formatAgo(now - fetchedAt) }}に更新</span
+          <span v-if="fetchedAt" class="ago" title="最終更新"
+            ><component :is="icons.update" />{{ formatAgo(now - fetchedAt) }}</span
           >
+          <span v-if="shownDevices.length" class="ago" title="受信中のデバイス">
+            <i class="dot" :class="{ warn: receiving < shownDevices.length }" aria-hidden="true"></i>
+            受信 {{ receiving }} / {{ shownDevices.length }} 台
+          </span>
         </div>
         <div class="actions">
+          <button
+            type="button"
+            class="icon-btn"
+            :aria-label="`テーマ: ${THEME_LABELS[theme.mode.value]}（押すと切り替え）`"
+            :title="`テーマ: ${THEME_LABELS[theme.mode.value]}`"
+            @click="theme.cycle"
+          >
+            <component :is="icons[THEME_ICONS[theme.mode.value]]" />
+          </button>
           <RouterLink
             to="/devices"
             class="icon-btn"
@@ -150,6 +171,10 @@ function relogin() {
 .actions {
   display: flex;
   align-items: center;
+}
+.ago .dot {
+  width: 8px;
+  height: 8px;
 }
 .badge {
   position: absolute;

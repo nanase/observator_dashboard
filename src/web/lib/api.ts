@@ -1,11 +1,4 @@
-import type {
-  Device,
-  DevicePatch,
-  LatestResponse,
-  LegacyObservatorItem,
-  Resolution,
-  SeriesResponse,
-} from '../../shared/api';
+import type { Device, DevicePatch, LatestResponse, Resolution, SeriesResponse } from '../../shared/api';
 import type { Metric } from '../../shared/metrics';
 
 // Access のセッションが切れると、API への要求はログイン画面へのリダイレクトになる
@@ -64,7 +57,4 @@ export const api = {
 
   updateDevice: (id: number, patch: DevicePatch) =>
     request<Device>(`/api/devices/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
-
-  importLegacy: (items: LegacyObservatorItem[]) =>
-    request<{ imported: number }>('/api/devices/import', { method: 'POST', body: JSON.stringify(items) }),
 };

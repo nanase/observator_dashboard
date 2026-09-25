@@ -1,54 +1,28 @@
+import { env } from 'cloudflare:test';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Device, LatestResponse } from '../src/shared/api';
 import { floorToJstDay } from '../src/worker/time';
 import { asUser, CENTRAL, nowSec, postIngest, resetDatabase } from './helpers';
 
 const SENSOR_A = '11:22:33:44:55:01';
-const SENSOR_B = '11:22:33:44:55:02';
 
 async function devices(): Promise<Device[]> {
   return ((await (await asUser('/api/devices')).json()) as { devices: Device[] }).devices;
 }
 
+async function addDevice(address: string, name: string | null = null): Promise<void> {
+  await env.DB.prepare(
+    `INSERT INTO devices (address, kind, status, name, first_seen_at, updated_at) VALUES (?, 'W3400010', 'active', ?, 0, 0)`,
+  )
+    .bind(address, name)
+    .run();
+}
+
 beforeEach(resetDatabase);
-
-describe('POST /api/devices/import', () => {
-  it('旧ダッシュボードのエクスポートを承認済みとして取り込む', async () => {
-    const response = await asUser('/api/devices/import', {
-      method: 'POST',
-      body: [
-        { address: SENSOR_B.toUpperCase(), name: '寝室', result: { type: 'W3200010', sensor: [] } },
-        { address: SENSOR_A, name: SENSOR_A, hidden: true },
-      ],
-    });
-    expect(await response.json()).toEqual({ imported: 2 });
-
-    expect(await devices()).toMatchObject([
-      { address: SENSOR_B, kind: 'W3400010', status: 'active', name: '寝室', sortOrder: 0, hidden: false },
-      { address: SENSOR_A, kind: 'unknown', status: 'active', name: null, sortOrder: 1, hidden: true },
-    ]);
-  });
-
-  it('既存のデバイスは名前と順序を上書きし、種別は受信値を保つ', async () => {
-    await postIngest({
-      central: CENTRAL,
-      sentAt: nowSec(),
-      readings: [{ address: SENSOR_A, kind: 'W3400010', observedAt: nowSec(), temperature: 20 }],
-    });
-    await asUser('/api/devices/import', { method: 'POST', body: [{ address: SENSOR_A, name: '居間' }] });
-
-    expect(await devices()).toMatchObject([{ address: SENSOR_A, kind: 'W3400010', status: 'active', name: '居間' }]);
-  });
-
-  it('形式が不正なら 400 を返す', async () => {
-    const response = await asUser('/api/devices/import', { method: 'POST', body: [{ address: 'x' }] });
-    expect(response.status).toBe(400);
-  });
-});
 
 describe('PATCH /api/devices/:id', () => {
   it('名前・順序・非表示・高度を変更できる', async () => {
-    await asUser('/api/devices/import', { method: 'POST', body: [{ address: SENSOR_A }] });
+    await addDevice(SENSOR_A);
     const [device] = await devices();
 
     const response = await asUser(`/api/devices/${device.id}`, {
@@ -59,7 +33,7 @@ describe('PATCH /api/devices/:id', () => {
   });
 
   it('アイコンを設定・解除できる', async () => {
-    await asUser('/api/devices/import', { method: 'POST', body: [{ address: SENSOR_A }] });
+    await addDevice(SENSOR_A);
     const [device] = await devices();
 
     const set = await asUser(`/api/devices/${device.id}`, { method: 'PATCH', body: { icon: 'bathtub' } });
@@ -69,7 +43,7 @@ describe('PATCH /api/devices/:id', () => {
   });
 
   it('温度の適正範囲は片方だけでも設定でき、解除もできる', async () => {
-    await asUser('/api/devices/import', { method: 'POST', body: [{ address: SENSOR_A }] });
+    await addDevice(SENSOR_A);
     const [device] = await devices();
     const patch = async (body: unknown) =>
       (await asUser(`/api/devices/${device.id}`, { method: 'PATCH', body })).json();
@@ -83,7 +57,7 @@ describe('PATCH /api/devices/:id', () => {
   });
 
   it('空の名前は未設定に戻す', async () => {
-    await asUser('/api/devices/import', { method: 'POST', body: [{ address: SENSOR_A, name: '書斎' }] });
+    await addDevice(SENSOR_A, '書斎');
     const [device] = await devices();
 
     const response = await asUser(`/api/devices/${device.id}`, { method: 'PATCH', body: { name: '' } });
@@ -101,7 +75,7 @@ describe('PATCH /api/devices/:id', () => {
     { name: 1 },
     [],
   ])('不正な値 %j は 400 を返す', async (body) => {
-    await asUser('/api/devices/import', { method: 'POST', body: [{ address: SENSOR_A }] });
+    await addDevice(SENSOR_A);
     const [device] = await devices();
     expect((await asUser(`/api/devices/${device.id}`, { method: 'PATCH', body })).status).toBe(400);
   });
