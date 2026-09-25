@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import type { Device } from '../../shared/api';
 import { absoluteHumidity, dewPoint, discomfortIndex, discomfortLabel, seaLevelPressure } from '../../shared/derived';
+import type { CardMetric } from '../composables/useCardMetric';
 import type { RecentSeries } from '../composables/useObservations';
 import { useNow } from '../composables/useNow';
 import { formatNumber, formatTime, startOfJstDay } from '../lib/format';
@@ -19,7 +20,7 @@ import {
 import ReceptionStatus from './ReceptionStatus.vue';
 import SparkLine from './SparkLine.vue';
 
-const props = defineProps<{ device: Device; recent?: RecentSeries; color: string }>();
+const props = defineProps<{ device: Device; recent?: RecentSeries; color: string; metric: CardMetric }>();
 
 const now = useNow();
 const central = computed(() => isCentral(props.device.kind));
@@ -75,6 +76,59 @@ const today = computed(() => {
     if (!min || v < min.v) min = { t, v };
   });
   return max && min ? { max: max as { t: number; v: number }, min: min as { t: number; v: number } } : null;
+});
+
+interface SparkConfig {
+  title: string;
+  values: (number | null)[];
+  unit: string;
+  digits: number;
+  markers?: { max: { t: number; v: number }; min: { t: number; v: number } } | null;
+  range?: { min: number | null; max: number | null } | null;
+  threshold?: number | null;
+}
+
+// 測っていない指標なら null
+function sparkFor(metric: CardMetric): SparkConfig | null {
+  const s = props.recent;
+  const r = reading.value;
+  if (!s || !r) return null;
+  switch (metric) {
+    case 'temperature':
+      return {
+        title: '温度',
+        values: s.temperature,
+        unit: '℃',
+        digits: 1,
+        markers: today.value,
+        range: rangeText.value ? { min: props.device.temperatureMin, max: props.device.temperatureMax } : null,
+      };
+    case 'humidity':
+      return r.humidity == null ? null : { title: '湿度', values: s.humidity, unit: '%', digits: 0 };
+    case 'pressure': {
+      if (r.pressure == null) return null;
+      const altitude = props.device.altitudeM;
+      if (altitude === null) return { title: '現地気圧', values: s.pressure, unit: ' hPa', digits: 1 };
+      const values = s.pressure.map((p, i) =>
+        p == null ? null : seaLevelPressure(p, s.temperature[i] ?? temperature.value ?? 15, altitude),
+      );
+      return { title: '海面気圧', values, unit: ' hPa', digits: 1 };
+    }
+    case 'co2':
+      return r.co2 == null ? null : { title: 'CO2', values: s.co2, unit: ' ppm', digits: 0, threshold: CO2_CAUTION };
+  }
+}
+
+// 選んだ指標を測っていなければ温度にする。セントラルは CO2（CO2 を選んだときは温度）も並べる
+const sparks = computed(() => {
+  const primary = sparkFor(props.metric) ?? sparkFor('temperature');
+  if (!primary) return [];
+  const list = [primary];
+  if (central.value) {
+    const second = sparkFor(props.metric === 'co2' ? 'temperature' : 'co2');
+    if (second && second.title !== primary.title) list.push(second);
+  }
+  return list;
 });
 </script>
 
@@ -167,31 +221,20 @@ const today = computed(() => {
 
       <div class="col sparks dim">
         <SparkLine
-          v-if="recent"
-          title="温度"
-          :ts="recent.ts"
-          :values="recent.temperature"
+          v-for="spark in sparks"
+          :key="spark.title"
+          :title="spark.title"
+          :ts="recent!.ts"
+          :values="spark.values"
           :from="window24h.from"
           :to="window24h.to"
           :day-start="window24h.dayStart"
           :color="color"
-          unit="℃"
-          :digits="1"
-          :markers="today"
-          :range="rangeText ? { min: device.temperatureMin, max: device.temperatureMax } : null"
-        />
-        <SparkLine
-          v-if="recent && central && co2 !== null"
-          title="CO2"
-          :ts="recent.ts"
-          :values="recent.co2"
-          :from="window24h.from"
-          :to="window24h.to"
-          :day-start="window24h.dayStart"
-          :color="color"
-          unit=" ppm"
-          :digits="0"
-          :threshold="CO2_CAUTION"
+          :unit="spark.unit"
+          :digits="spark.digits"
+          :markers="spark.markers"
+          :range="spark.range"
+          :threshold="spark.threshold"
         />
       </div>
     </div>
@@ -282,7 +325,8 @@ const today = computed(() => {
 .hilo {
   display: grid;
   gap: 2px;
-  padding-bottom: 4px;
+  /* 見出しの分だけ下げ、温度の数値と横に並べる */
+  margin-top: 22px;
   font-size: 12px;
   color: var(--on-surface-variant);
   white-space: nowrap;
@@ -334,9 +378,10 @@ const today = computed(() => {
   min-width: 0;
 }
 
+/* 「温度」「湿度」の見出しを上端でそろえる */
 .now {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 8px 20px;
   flex-wrap: wrap;
 }
@@ -358,12 +403,12 @@ const today = computed(() => {
   line-height: 1;
 }
 .big-t .num {
-  font-size: 52px;
+  font-size: 44px;
   letter-spacing: -1px;
 }
 .big-t .unit {
-  font-size: 20px;
-  margin: 6px 0 0 2px;
+  font-size: 18px;
+  margin: 4px 0 0 2px;
   color: var(--on-surface-variant);
 }
 .big-t.out {
@@ -383,7 +428,7 @@ const today = computed(() => {
   margin-right: 2px;
 }
 .big-h .num {
-  font-size: 30px;
+  font-size: 28px;
 }
 .big-h .unit {
   font-size: 16px;
@@ -466,8 +511,7 @@ const today = computed(() => {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   border-top: 1px solid var(--hairline);
-  border-bottom: 1px solid var(--hairline);
-  padding: 10px 0;
+  padding-top: 10px;
 }
 .derived > div {
   padding: 0 8px;

@@ -1,3 +1,7 @@
 [tools]
-node = "24"
+node = "26"
 bun = "1.4"
+
+[settings]
+# PATH にシステムの Node が先にあっても、ここで固定した版を優先する
+activate_aggressive = true

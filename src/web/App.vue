@@ -14,7 +14,7 @@ const { latest, shownDevices, fetchedAt, error, sessionExpired } = useObservatio
 const theme = useTheme();
 
 const THEME_LABELS = { system: 'デバイスの設定', light: 'ライト', dark: 'ダーク' } as const;
-const THEME_ICONS = { system: 'brightness-auto', light: 'light-mode', dark: 'dark-mode' } as const;
+const THEME_ICONS = { system: 'contrast', light: 'light-mode', dark: 'dark-mode' } as const;
 
 const receiving = computed(() => shownDevices.value.filter((d) => now.value - d.lastSeenAt <= STALE_SECONDS).length);
 
@@ -159,14 +159,15 @@ function relogin() {
   font-weight: 500;
 }
 .ago {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
   color: var(--on-surface-variant);
   font-size: 13px;
+  white-space: nowrap;
 }
+/* アイコンは文字のベースラインに載せ、ほかの要素と高さをそろえる */
 .ago svg {
-  font-size: 16px;
+  font-size: 15px;
+  vertical-align: -2px;
+  margin-right: 4px;
 }
 .actions {
   display: flex;
@@ -175,6 +176,8 @@ function relogin() {
 .ago .dot {
   width: 8px;
   height: 8px;
+  vertical-align: 0;
+  margin-right: 6px;
 }
 .badge {
   position: absolute;

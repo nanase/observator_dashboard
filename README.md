@@ -6,7 +6,9 @@
 
 ## 開発
 
-[mise](https://mise.jdx.dev/) で Node と Bun のバージョンをそろえる。
+[mise](https://mise.jdx.dev/) で Node と Bun のバージョンをそろえる。コマンドは `mise x -- bun run build` のように mise 経由で実行する。
+
+- `mise.toml` の `activate_aggressive` により、PATH にシステムの Node が先にあっても mise で固定した版が使われる
 
 ```sh
 mise install

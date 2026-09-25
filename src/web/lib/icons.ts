@@ -62,7 +62,7 @@ import IUpload from '~icons/material-symbols/upload-outline-rounded';
 import IThermometer from '~icons/material-symbols/device-thermostat-rounded';
 import IOpenInNew from '~icons/material-symbols/open-in-new-outline-rounded';
 
-import IBrightnessAuto from '~icons/material-symbols/brightness-auto-outline-rounded';
+import IContrast from '~icons/material-symbols/contrast-rounded';
 import ILightMode from '~icons/material-symbols/light-mode-outline-rounded';
 import IDarkMode from '~icons/material-symbols/dark-mode-outline-rounded';
 
@@ -132,7 +132,7 @@ export const icons = {
   upload: IUpload,
   thermometer: IThermometer,
   'open-in-new': IOpenInNew,
-  'brightness-auto': IBrightnessAuto,
+  contrast: IContrast,
   'light-mode': ILightMode,
   'dark-mode': IDarkMode,
 } satisfies Record<string, Component>;

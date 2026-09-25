@@ -33,7 +33,7 @@ async function refreshRecent(devices: Device[]) {
     deviceIds: ids,
     from: now - 86400,
     to: now + 60,
-    metrics: ['temperature', 'co2'],
+    metrics: ['temperature', 'humidity', 'pressure', 'co2'],
     resolution: '1m',
   });
   recentKey = key;
@@ -69,6 +69,8 @@ function start() {
 export interface RecentSeries {
   ts: number[];
   temperature: (number | null)[];
+  humidity: (number | null)[];
+  pressure: (number | null)[];
   co2: (number | null)[];
 }
 
@@ -79,7 +81,13 @@ export function useObservations() {
   const recentByDevice = computed(() => {
     const map = new Map<number, RecentSeries>();
     for (const s of recent.value?.series ?? []) {
-      map.set(s.deviceId, { ts: s.ts, temperature: s.values.temperature?.avg ?? [], co2: s.values.co2?.avg ?? [] });
+      map.set(s.deviceId, {
+        ts: s.ts,
+        temperature: s.values.temperature?.avg ?? [],
+        humidity: s.values.humidity?.avg ?? [],
+        pressure: s.values.pressure?.avg ?? [],
+        co2: s.values.co2?.avg ?? [],
+      });
     }
     return map;
   });
