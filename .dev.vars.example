@@ -1,0 +1,12 @@
+# ローカル開発用。.dev.vars にコピーして使う
+# 本番では DEV_AUTH_EMAIL を設定せず、残りを wrangler secret put で設定する
+
+# localhost からのアクセスに限り、Access の検証を省いてこのメールアドレスでログインした扱いにする
+DEV_AUTH_EMAIL=dev@example.com
+
+# Access のチームドメイン（<team>.cloudflareaccess.com）
+ACCESS_TEAM_DOMAIN=
+# Access アプリケーションの AUD タグ
+ACCESS_AUD=
+# ESP32 に持たせるサービストークンの Client ID
+INGEST_CLIENT_ID=
