@@ -10,6 +10,7 @@ import {
   updateDevice,
 } from './devices';
 import { ingest, parseIngestRequest } from './ingest';
+import { parseSeriesQuery, querySeries } from './series';
 import { nowSeconds } from './time';
 
 export interface AppOptions {
@@ -80,6 +81,12 @@ export function createApp(options: AppOptions = {}) {
   app.get('/latest', async (c) => {
     const [devices, pendingCount] = await Promise.all([listDevices(c.env.DB, 'active'), countPendingDevices(c.env.DB)]);
     return c.json<LatestResponse>({ now: nowSeconds(), pendingCount, devices });
+  });
+
+  app.get('/series', async (c) => {
+    const query = parseSeriesQuery(new URL(c.req.url).searchParams);
+    if (typeof query === 'string') return c.json({ error: query }, 400);
+    return c.json(await querySeries(c.env.DB, query, nowSeconds()));
   });
 
   app.get('/devices', async (c) => c.json({ devices: await listDevices(c.env.DB) }));

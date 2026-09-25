@@ -1,4 +1,4 @@
-import type { MetricValues } from './metrics';
+import type { Metric, MetricValues } from './metrics';
 
 export type DeviceStatus = 'pending' | 'active' | 'ignored';
 
@@ -51,6 +51,29 @@ export interface DevicePatch {
   hidden?: boolean;
   altitudeM?: number | null;
   status?: DeviceStatus;
+}
+
+export type Resolution = '1m' | '10m' | '1d';
+
+export interface SeriesValues {
+  avg: (number | null)[];
+  // 1 分粒度では集計しないので持たない
+  min?: (number | null)[];
+  max?: (number | null)[];
+}
+
+export interface Series {
+  deviceId: number;
+  ts: number[];
+  values: { [M in Metric]?: SeriesValues };
+}
+
+export interface SeriesResponse {
+  resolution: Resolution;
+  step: number;
+  from: number;
+  to: number;
+  series: Series[];
 }
 
 // 旧ダッシュボードの「Export」が出力する JSON の要素

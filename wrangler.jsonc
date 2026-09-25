@@ -13,5 +13,7 @@
   },
   // database_id は書かない。初回デプロイ時に自動で作成・紐付けされる
   "d1_databases": [{ "binding": "DB", "database_name": "observator", "migrations_dir": "migrations" }],
+  // 集計と通知判定は 5 分ごと、古いデータの削除は毎日 04:00 JST
+  "triggers": { "crons": ["*/5 * * * *", "0 19 * * *"] },
   "observability": { "enabled": true },
 }
