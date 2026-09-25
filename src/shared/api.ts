@@ -1,3 +1,4 @@
+import type { DeviceIcon } from './icons';
 import type { Metric, MetricValues } from './metrics';
 
 export type DeviceStatus = 'pending' | 'active' | 'ignored';
@@ -31,9 +32,13 @@ export interface Device {
   kind: string;
   status: DeviceStatus;
   name: string | null;
+  icon: DeviceIcon | null;
   sortOrder: number;
   hidden: boolean;
   altitudeM: number | null;
+  // 温度の適正範囲（℃）。片方だけの指定もある
+  temperatureMin: number | null;
+  temperatureMax: number | null;
   firstSeenAt: number;
   lastSeenAt: number;
   lastReading: LastReading | null;
@@ -47,9 +52,12 @@ export interface LatestResponse {
 
 export interface DevicePatch {
   name?: string | null;
+  icon?: DeviceIcon | null;
   sortOrder?: number;
   hidden?: boolean;
   altitudeM?: number | null;
+  temperatureMin?: number | null;
+  temperatureMax?: number | null;
   status?: DeviceStatus;
 }
 

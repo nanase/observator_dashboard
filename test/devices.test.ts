@@ -58,6 +58,30 @@ describe('PATCH /api/devices/:id', () => {
     expect(await response.json()).toMatchObject({ name: '書斎', sortOrder: 5, hidden: true, altitudeM: 380.4 });
   });
 
+  it('アイコンを設定・解除できる', async () => {
+    await asUser('/api/devices/import', { method: 'POST', body: [{ address: SENSOR_A }] });
+    const [device] = await devices();
+
+    const set = await asUser(`/api/devices/${device.id}`, { method: 'PATCH', body: { icon: 'bathtub' } });
+    expect(await set.json()).toMatchObject({ icon: 'bathtub' });
+    const unset = await asUser(`/api/devices/${device.id}`, { method: 'PATCH', body: { icon: null } });
+    expect(await unset.json()).toMatchObject({ icon: null });
+  });
+
+  it('温度の適正範囲は片方だけでも設定でき、解除もできる', async () => {
+    await asUser('/api/devices/import', { method: 'POST', body: [{ address: SENSOR_A }] });
+    const [device] = await devices();
+    const patch = async (body: unknown) =>
+      (await asUser(`/api/devices/${device.id}`, { method: 'PATCH', body })).json();
+
+    expect(await patch({ temperatureMin: 0, temperatureMax: 6 })).toMatchObject({
+      temperatureMin: 0,
+      temperatureMax: 6,
+    });
+    expect(await patch({ temperatureMin: null })).toMatchObject({ temperatureMin: null, temperatureMax: 6 });
+    expect(await patch({ temperatureMax: null })).toMatchObject({ temperatureMin: null, temperatureMax: null });
+  });
+
   it('空の名前は未設定に戻す', async () => {
     await asUser('/api/devices/import', { method: 'POST', body: [{ address: SENSOR_A, name: '書斎' }] });
     const [device] = await devices();
@@ -66,14 +90,21 @@ describe('PATCH /api/devices/:id', () => {
     expect(await response.json()).toMatchObject({ name: null });
   });
 
-  it.each([{ status: 'deleted' }, { hidden: 1 }, { sortOrder: 1.5 }, { altitudeM: '380' }, { name: 1 }, []])(
-    '不正な値 %j は 400 を返す',
-    async (body) => {
-      await asUser('/api/devices/import', { method: 'POST', body: [{ address: SENSOR_A }] });
-      const [device] = await devices();
-      expect((await asUser(`/api/devices/${device.id}`, { method: 'PATCH', body })).status).toBe(400);
-    },
-  );
+  it.each([
+    { status: 'deleted' },
+    { icon: 'rocket' },
+    { temperatureMin: 10, temperatureMax: 5 },
+    { temperatureMax: 200 },
+    { hidden: 1 },
+    { sortOrder: 1.5 },
+    { altitudeM: '380' },
+    { name: 1 },
+    [],
+  ])('不正な値 %j は 400 を返す', async (body) => {
+    await asUser('/api/devices/import', { method: 'POST', body: [{ address: SENSOR_A }] });
+    const [device] = await devices();
+    expect((await asUser(`/api/devices/${device.id}`, { method: 'PATCH', body })).status).toBe(400);
+  });
 
   it('存在しない ID は 404 を返す', async () => {
     expect((await asUser('/api/devices/999', { method: 'PATCH', body: { hidden: true } })).status).toBe(404);

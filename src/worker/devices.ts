@@ -1,4 +1,6 @@
 import type { Device, DevicePatch, DeviceStatus, LastReading, LegacyObservatorItem } from '../shared/api';
+import { isDeviceIcon, type DeviceIcon } from '../shared/icons';
+import { METRIC_RANGES } from '../shared/metrics';
 
 export interface DeviceRow {
   id: number;
@@ -6,9 +8,12 @@ export interface DeviceRow {
   kind: string;
   status: DeviceStatus;
   name: string | null;
+  icon: string | null;
   sort_order: number;
   hidden: number;
   altitude_m: number | null;
+  temperature_min: number | null;
+  temperature_max: number | null;
   first_seen_at: number;
   last_seen_at: number;
   last_reading: string | null;
@@ -25,9 +30,12 @@ export function toDevice(row: DeviceRow): Device {
     kind: row.kind,
     status: row.status,
     name: row.name,
+    icon: isDeviceIcon(row.icon) ? row.icon : null,
     sortOrder: row.sort_order,
     hidden: row.hidden === 1,
     altitudeM: row.altitude_m,
+    temperatureMin: row.temperature_min,
+    temperatureMax: row.temperature_max,
     firstSeenAt: row.first_seen_at,
     lastSeenAt: row.last_seen_at,
     lastReading: row.last_reading === null ? null : (JSON.parse(row.last_reading) as LastReading),
@@ -59,6 +67,10 @@ export function parseDevicePatch(body: unknown): DevicePatch | string {
     if (name !== null && name.length > 64) return 'name is too long';
     patch.name = name === '' ? null : name;
   }
+  if ('icon' in input) {
+    if (input.icon !== null && !isDeviceIcon(input.icon)) return 'icon is invalid';
+    patch.icon = input.icon as DeviceIcon | null;
+  }
   if ('sortOrder' in input) {
     if (!Number.isInteger(input.sortOrder)) return 'sortOrder must be an integer';
     patch.sortOrder = input.sortOrder as number;
@@ -73,6 +85,22 @@ export function parseDevicePatch(body: unknown): DevicePatch | string {
       return 'altitudeM must be a number or null';
     }
     patch.altitudeM = altitude;
+  }
+  for (const key of ['temperatureMin', 'temperatureMax'] as const) {
+    if (!(key in input)) continue;
+    const value = input[key];
+    const [min, max] = METRIC_RANGES.temperature;
+    if (value !== null && (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max)) {
+      return `${key} must be a number between ${min} and ${max} or null`;
+    }
+    patch[key] = value;
+  }
+  if (
+    typeof patch.temperatureMin === 'number' &&
+    typeof patch.temperatureMax === 'number' &&
+    patch.temperatureMin >= patch.temperatureMax
+  ) {
+    return 'temperatureMin must be less than temperatureMax';
   }
   if ('status' in input) {
     if (!DEVICE_STATUSES.includes(input.status as DeviceStatus)) return 'status is invalid';
@@ -90,9 +118,12 @@ export async function updateDevice(
 ): Promise<Device | null> {
   const columns: Record<keyof DevicePatch, string> = {
     name: 'name',
+    icon: 'icon',
     sortOrder: 'sort_order',
     hidden: 'hidden',
     altitudeM: 'altitude_m',
+    temperatureMin: 'temperature_min',
+    temperatureMax: 'temperature_max',
     status: 'status',
   };
   const assignments: string[] = [];
