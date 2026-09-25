@@ -11,8 +11,15 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"],
   },
-  // database_id は書かない。初回デプロイ時に自動で作成・紐付けされる
-  "d1_databases": [{ "binding": "DB", "database_name": "observator", "migrations_dir": "migrations" }],
+  // database_id は初回デプロイ時に Wrangler が自動で作成し、書き込む
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "observator",
+      "migrations_dir": "migrations",
+      "database_id": "a44006c3-3b92-4b75-9d9f-832a68390132",
+    },
+  ],
   // 集計と通知判定は 5 分ごと、古いデータの削除は毎日 04:00 JST
   "triggers": { "crons": ["*/5 * * * *", "0 19 * * *"] },
   "observability": { "enabled": true },
