@@ -8,6 +8,7 @@ export interface DeviceRow {
   kind: string;
   status: DeviceStatus;
   name: string | null;
+  asset_tag: string | null;
   icon: string | null;
   sort_order: number;
   hidden: number;
@@ -30,6 +31,7 @@ export function toDevice(row: DeviceRow): Device {
     kind: row.kind,
     status: row.status,
     name: row.name,
+    assetTag: row.asset_tag,
     icon: isDeviceIcon(row.icon) ? row.icon : null,
     sortOrder: row.sort_order,
     hidden: row.hidden === 1,
@@ -61,11 +63,16 @@ export function parseDevicePatch(body: unknown): DevicePatch | string {
   const input = body as Record<string, unknown>;
   const patch: DevicePatch = {};
 
-  if ('name' in input) {
-    if (input.name !== null && typeof input.name !== 'string') return 'name must be a string or null';
-    const name = typeof input.name === 'string' ? input.name.trim() : null;
-    if (name !== null && name.length > 64) return 'name is too long';
-    patch.name = name === '' ? null : name;
+  for (const [key, maxLength] of [
+    ['name', 64],
+    ['assetTag', 32],
+  ] as const) {
+    if (!(key in input)) continue;
+    const value = input[key];
+    if (value !== null && typeof value !== 'string') return `${key} must be a string or null`;
+    const text = typeof value === 'string' ? value.trim() : null;
+    if (text !== null && text.length > maxLength) return `${key} is too long`;
+    patch[key] = text === '' ? null : text;
   }
   if ('icon' in input) {
     if (input.icon !== null && !isDeviceIcon(input.icon)) return 'icon is invalid';
@@ -118,6 +125,7 @@ export async function updateDevice(
 ): Promise<Device | null> {
   const columns: Record<keyof DevicePatch, string> = {
     name: 'name',
+    assetTag: 'asset_tag',
     icon: 'icon',
     sortOrder: 'sort_order',
     hidden: 'hidden',

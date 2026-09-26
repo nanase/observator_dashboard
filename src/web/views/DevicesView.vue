@@ -83,9 +83,9 @@ async function move(device: Device, offset: -1 | 1) {
 
 const parseNumber = (value: string): number | null => (value.trim() === '' ? null : Number(value));
 
-function updateName(device: Device, event: Event) {
-  const name = (event.target as HTMLInputElement).value.trim();
-  if (name !== (device.name ?? '')) update(device, { name: name === '' ? null : name });
+function updateText(device: Device, key: 'name' | 'assetTag', event: Event) {
+  const text = (event.target as HTMLInputElement).value.trim();
+  if (text !== (device[key] ?? '')) update(device, { [key]: text === '' ? null : text });
 }
 
 function updateNumber(device: Device, key: 'altitudeM' | 'temperatureMin' | 'temperatureMax', event: Event) {
@@ -144,6 +144,7 @@ const summary = (d: Device) => {
           <div class="ttl">
             <h3>
               {{ d.name ?? d.address }}
+              <span v-if="d.assetTag" class="asset-tag">{{ d.assetTag }}</span>
               <span v-if="d.hidden" class="tag"><component :is="icons['visibility-off']" />非表示</span>
               <span v-if="saved === d.id" class="tag ok"><component :is="icons.check" />保存しました</span>
             </h3>
@@ -189,7 +190,18 @@ const summary = (d: Device) => {
                 maxlength="64"
                 :value="d.name ?? ''"
                 :placeholder="d.address"
-                @change="updateName(d, $event)"
+                @change="updateText(d, 'name', $event)"
+              />
+            </label>
+            <label class="field">
+              管理番号
+              <input
+                :id="`tag-${d.id}`"
+                type="text"
+                maxlength="32"
+                :value="d.assetTag ?? ''"
+                placeholder="なし"
+                @change="updateText(d, 'assetTag', $event)"
               />
             </label>
             <label class="field">
@@ -265,7 +277,9 @@ const summary = (d: Device) => {
       <article v-for="d in ignored" :key="d.id" class="panel row">
         <span class="avatar"><component :is="deviceIcon(d.icon, isCentral(d.kind))" /></span>
         <div class="ttl">
-          <h3>{{ d.name ?? d.address }}</h3>
+          <h3>
+            {{ d.name ?? d.address }}<span v-if="d.assetTag" class="asset-tag">{{ d.assetTag }}</span>
+          </h3>
           <p class="sub">{{ kindLabel(d.kind) }}・{{ d.address }}</p>
         </div>
         <div class="actions">
@@ -341,6 +355,11 @@ const summary = (d: Device) => {
 .sub {
   font-size: 12px;
   color: var(--on-surface-variant);
+}
+.asset-tag {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
 }
 .tag {
   display: inline-flex;

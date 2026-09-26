@@ -32,6 +32,8 @@ export interface Device {
   kind: string;
   status: DeviceStatus;
   name: string | null;
+  // 本体に貼った管理番号。名前とは別に持つ
+  assetTag: string | null;
   icon: DeviceIcon | null;
   sortOrder: number;
   hidden: boolean;
@@ -52,6 +54,7 @@ export interface LatestResponse {
 
 export interface DevicePatch {
   name?: string | null;
+  assetTag?: string | null;
   icon?: DeviceIcon | null;
   sortOrder?: number;
   hidden?: boolean;

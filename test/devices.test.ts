@@ -56,6 +56,16 @@ describe('PATCH /api/devices/:id', () => {
     expect(await patch({ temperatureMax: null })).toMatchObject({ temperatureMin: null, temperatureMax: null });
   });
 
+  it('管理番号を設定・解除できる', async () => {
+    await addDevice(SENSOR_A, '書斎');
+    const [device] = await devices();
+    const patch = async (body: unknown) =>
+      (await asUser(`/api/devices/${device.id}`, { method: 'PATCH', body })).json();
+
+    expect(await patch({ assetTag: ' T-03 ' })).toMatchObject({ name: '書斎', assetTag: 'T-03' });
+    expect(await patch({ assetTag: '' })).toMatchObject({ assetTag: null });
+  });
+
   it('空の名前は未設定に戻す', async () => {
     await addDevice(SENSOR_A, '書斎');
     const [device] = await devices();
@@ -73,6 +83,8 @@ describe('PATCH /api/devices/:id', () => {
     { sortOrder: 1.5 },
     { altitudeM: '380' },
     { name: 1 },
+    { assetTag: 3 },
+    { assetTag: 'x'.repeat(33) },
     [],
   ])('不正な値 %j は 400 を返す', async (body) => {
     await addDevice(SENSOR_A);

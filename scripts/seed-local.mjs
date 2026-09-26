@@ -14,6 +14,7 @@ const devices = [
     address: '02:00:00:00:00:01',
     kind: 'ESP32-Central',
     name: '居間',
+    assetTag: 'C-01',
     icon: 'weekend',
     base: 24.5,
     amp: 1.8,
@@ -26,6 +27,7 @@ const devices = [
     address: '02:00:00:00:00:02',
     kind: 'W3400010',
     name: '寝室',
+    assetTag: 'T-01',
     icon: 'bed',
     base: 23.5,
     amp: 1.2,
@@ -37,6 +39,7 @@ const devices = [
     address: '02:00:00:00:00:03',
     kind: 'W3400010',
     name: '書斎',
+    assetTag: 'T-02',
     icon: 'desk',
     base: 25.5,
     amp: 2.0,
@@ -48,6 +51,7 @@ const devices = [
     address: '02:00:00:00:00:04',
     kind: 'W3400010',
     name: '浴室',
+    assetTag: 'T-03',
     icon: 'bathtub',
     base: 25,
     amp: 2.5,
@@ -71,6 +75,7 @@ const devices = [
     address: '02:00:00:00:00:06',
     kind: 'W3400010',
     name: '冷蔵庫',
+    assetTag: 'T-05',
     icon: 'kitchen',
     base: 4,
     amp: 0.6,
@@ -96,7 +101,8 @@ function reading(d, t) {
     r.co2 = Math.round(600 + 500 * Math.max(0, Math.sin((2 * Math.PI * (h - 13)) / 24)) + 40 * noise(t, 5));
     r.pressure = +(968 + 3 * Math.sin(t / (4.3 * DAY)) + 0.5 * Math.cos((2 * Math.PI * (h - 10)) / 12)).toFixed(2);
   }
-  if (d.battery !== undefined) r.battery = d.battery;
+  // 電池は日に 0.05% ずつ減ってきた扱いにする
+  if (d.battery !== undefined) r.battery = Math.min(100, Math.round(d.battery + ((now - t) / DAY) * 0.05));
   return r;
 }
 
@@ -119,7 +125,7 @@ for (const d of devices) {
   const last = Math.floor(now / MIN) * MIN - (d.staleMinutes ?? 0) * MIN;
   const lr = { observedAt: last, ...reading(d, last) };
   out.push(
-    `INSERT INTO devices (id, address, kind, status, name, icon, sort_order, hidden, altitude_m, temperature_min, temperature_max, first_seen_at, last_seen_at, last_reading, updated_at) VALUES (${d.id}, '${d.address}', '${d.kind}', 'active', '${d.name}', '${d.icon}', ${d.id}, 0, ${q(d.altitude)}, ${q(d.range?.[0])}, ${q(d.range?.[1])}, ${now - 400 * DAY}, ${last}, '${JSON.stringify(lr)}', ${now});`,
+    `INSERT INTO devices (id, address, kind, status, name, asset_tag, icon, sort_order, hidden, altitude_m, temperature_min, temperature_max, first_seen_at, last_seen_at, last_reading, updated_at) VALUES (${d.id}, '${d.address}', '${d.kind}', 'active', '${d.name}', ${q(d.assetTag)}, '${d.icon}', ${d.id}, 0, ${q(d.altitude)}, ${q(d.range?.[0])}, ${q(d.range?.[1])}, ${now - 400 * DAY}, ${last}, '${JSON.stringify(lr)}', ${now});`,
   );
 
   const m1 = [];

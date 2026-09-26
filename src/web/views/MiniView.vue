@@ -1,16 +1,18 @@
 <script setup lang="ts">
-// PC の小窓やスマホのホーム画面から開く、温度と湿度だけの表示
+// PC の小窓やスマホのホーム画面から開く、温度と湿度を中心にした表示
 import { computed } from 'vue';
 import { seaLevelPressure } from '../../shared/derived';
 import ReceptionStatus from '../components/ReceptionStatus.vue';
 import { useNow } from '../composables/useNow';
 import { useObservations } from '../composables/useObservations';
+import { deviceColors } from '../lib/colors';
 import { formatAgo, formatNumber, formatTime } from '../lib/format';
-import { deviceIcon, icons } from '../lib/icons';
-import { co2Level, isCentral, STALE_SECONDS, temperatureRangeState } from '../lib/status';
+import { batteryIcon, deviceIcon, icons, signalIcon } from '../lib/icons';
+import { BATTERY_LOW, co2Level, isCentral, STALE_SECONDS, temperatureRangeState } from '../lib/status';
 
-const { shownDevices, fetchedAt } = useObservations();
+const { latest, shownDevices, fetchedAt } = useObservations();
 const now = useNow();
+const colors = computed(() => deviceColors(latest.value?.devices ?? []));
 
 const rows = computed(() =>
   shownDevices.value.map((d) => {
@@ -23,11 +25,14 @@ const rows = computed(() =>
       device: d,
       name: d.name ?? d.address,
       icon: deviceIcon(d.icon, central),
+      color: colors.value.get(d.id) ?? 'var(--s1)',
       central,
       stale: now.value - d.lastSeenAt > STALE_SECONDS,
       out: range === 'above' || range === 'below',
       temperature: t,
       humidity: r?.humidity ?? null,
+      battery: r?.battery ?? null,
+      rssi: r?.rssi ?? null,
       co2: r?.co2 ?? null,
       co2Warn: r?.co2 != null && co2Level(r.co2).level !== 'good',
       pressure:
@@ -44,7 +49,6 @@ const rows = computed(() =>
 <template>
   <div class="mini">
     <header class="top">
-      <b>Observator</b>
       <span class="u">
         <component :is="icons.update" />{{ formatTime(now) }}
         <template v-if="fetchedAt">・{{ formatAgo(now - fetchedAt) }}</template>
@@ -54,13 +58,39 @@ const rows = computed(() =>
       /></RouterLink>
     </header>
     <ul class="list">
-      <li v-for="row in rows" :key="row.device.id" class="row" :class="{ stale: row.stale }">
-        <span class="nm">
-          <component :is="row.icon" class="dim" /><span class="n dim">{{ row.name }}</span>
-          <ReceptionStatus :last-seen-at="row.device.lastSeenAt" variant="icon" />
+      <li
+        v-for="row in rows"
+        :key="row.device.id"
+        class="row"
+        :class="{ stale: row.stale }"
+        :style="{ '--c': row.color }"
+      >
+        <span class="avatar dim"><component :is="row.icon" /></span>
+        <div class="who">
+          <span class="nm">
+            <span class="n dim">{{ row.name }}</span>
+            <span v-if="row.device.assetTag" class="tag dim">{{ row.device.assetTag }}</span>
+            <ReceptionStatus :last-seen-at="row.device.lastSeenAt" variant="icon" />
+          </span>
+          <span class="sig dim">
+            <span
+              v-if="row.battery !== null"
+              class="it"
+              :class="{ warn: row.battery < BATTERY_LOW }"
+              :title="`電池 ${row.battery}%`"
+            >
+              <component :is="icons[batteryIcon(row.battery)]" /><span class="sr">電池 </span>{{ row.battery }}%
+            </span>
+            <span v-if="row.rssi !== null" class="it" :title="row.central ? 'Wi-Fi の電波' : 'BLE の電波'">
+              <component :is="icons[signalIcon(row.rssi, row.central)]" /><span class="sr">電波 </span
+              >{{ formatNumber(row.rssi, 0) }}
+            </span>
+          </span>
+        </div>
+        <span class="vals dim">
+          <span class="t" :class="{ out: row.out }">{{ formatNumber(row.temperature, 1) }}<small>℃</small></span>
+          <span class="h">{{ formatNumber(row.humidity, 0) }}<small>%</small></span>
         </span>
-        <span class="t dim" :class="{ out: row.out }">{{ formatNumber(row.temperature, 1) }}<small>℃</small></span>
-        <span class="h dim">{{ formatNumber(row.humidity, 0) }}<small>%</small></span>
         <div v-if="row.central && (row.co2 !== null || row.pressure)" class="extra dim">
           <span v-if="row.co2 !== null" :class="{ w: row.co2Warn }" title="CO2">
             <component :is="icons.co2" /><b>{{ formatNumber(row.co2, 0) }}</b
@@ -86,21 +116,16 @@ const rows = computed(() =>
 .top {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
-  padding: 8px 8px 4px 20px;
+  padding: 4px 8px 0 16px;
   font-size: 12px;
   color: var(--on-surface-variant);
-}
-.top b {
-  font-weight: 500;
-  color: var(--on-surface);
-  font-size: 14px;
 }
 .top .u {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-left: auto;
 }
 .top .u svg {
   font-size: 16px;
@@ -108,38 +133,80 @@ const rows = computed(() =>
 .list {
   list-style: none;
   margin: 0;
-  padding: 0 8px 12px;
+  padding: 0 8px 8px;
 }
 .row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: baseline;
-  gap: 4px 12px;
-  padding: 12px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px 10px;
+  padding: 8px 8px;
 }
 .row + .row {
   border-top: 1px solid var(--hairline);
 }
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--c) 22%, var(--surface));
+  color: color-mix(in srgb, var(--c) 70%, var(--on-surface));
+  font-size: 19px;
+}
+.who {
+  display: grid;
+  min-width: 0;
+  line-height: 1.3;
+}
 .nm {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  font-weight: 500;
-  align-self: center;
+  gap: 6px;
   min-width: 0;
-}
-.nm > svg {
-  font-size: 20px;
-  color: var(--on-surface-variant);
+  font-size: 14px;
+  font-weight: 500;
 }
 .nm .n {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.nm .tag {
+  flex: none;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.sig {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--on-surface-variant);
+  white-space: nowrap;
+}
+.sig .it {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+.sig svg {
+  font-size: 13px;
+}
+.sig .it.warn {
+  color: var(--on-warn-container);
+  background: var(--warn-container);
+  border-radius: 4px;
+  padding: 0 4px 0 1px;
+}
+.vals {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
 .t {
-  font-size: 38px;
+  font-size: 28px;
   line-height: 1;
   letter-spacing: -0.5px;
 }
@@ -148,44 +215,43 @@ const rows = computed(() =>
 }
 .t small,
 .h small {
-  font-size: 15px;
+  font-size: 13px;
   color: var(--on-surface-variant);
   margin-left: 1px;
   letter-spacing: 0;
 }
 .h {
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1;
-  min-width: 3.1em;
+  min-width: 2.8em;
   text-align: right;
 }
 .extra {
-  grid-column: 1 / -1;
+  grid-column: 2 / -1;
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 16px;
-  font-size: 14px;
+  gap: 2px 14px;
+  font-size: 12px;
   color: var(--on-surface-variant);
-  padding-left: 28px;
 }
 .extra span {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 .extra b {
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 400;
   color: var(--on-surface);
 }
 .extra svg {
-  font-size: 18px;
+  font-size: 16px;
 }
 .extra .w {
   color: var(--on-warn-container);
   background: var(--warn-container);
-  border-radius: 8px;
-  padding: 0 8px 0 4px;
+  border-radius: 6px;
+  padding: 0 6px 0 3px;
 }
 .extra .w b {
   color: inherit;

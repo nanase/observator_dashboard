@@ -7,11 +7,11 @@ import SeriesChart, { type ChartPoint, type ChartSeries } from '../components/Se
 import { handleApiError, useObservations } from '../composables/useObservations';
 import { api } from '../lib/api';
 import { deviceColors } from '../lib/colors';
-import { formatDate } from '../lib/format';
+import { formatDate, jst } from '../lib/format';
 import { isCentral } from '../lib/status';
 
 type RangeKey = '24h' | '7d' | '30d' | '1y' | 'custom';
-type ChartMetric = 'temp' | 'hum' | 'dew' | 'ah' | 'di' | 'co2' | 'slp';
+type ChartMetric = 'temp' | 'hum' | 'dew' | 'ah' | 'di' | 'co2' | 'slp' | 'bat';
 
 const RANGES: { key: RangeKey; label: string; seconds?: number }[] = [
   { key: '24h', label: '24 時間', seconds: 86400 },
@@ -21,17 +21,27 @@ const RANGES: { key: RangeKey; label: string; seconds?: number }[] = [
   { key: 'custom', label: '任意' },
 ];
 
+// only: その指標を測っているデバイスの種類。セントラルは電池を持たない
 const METRICS: Record<
   ChartMetric,
-  { label: string; unit: string; digits: number; source: Metric[]; centralOnly?: boolean; derived?: boolean }
+  { label: string; unit: string; digits: number; source: Metric[]; only?: 'central' | 'sensor'; derived?: boolean }
 > = {
   temp: { label: '温度', unit: '℃', digits: 1, source: ['temperature'] },
   hum: { label: '湿度', unit: '%', digits: 0, source: ['humidity'] },
   dew: { label: '露点', unit: '℃', digits: 1, source: ['temperature', 'humidity'], derived: true },
   ah: { label: '絶対湿度', unit: 'g/m³', digits: 1, source: ['temperature', 'humidity'], derived: true },
   di: { label: '不快指数', unit: '', digits: 0, source: ['temperature', 'humidity'], derived: true },
-  co2: { label: 'CO2', unit: 'ppm', digits: 0, source: ['co2'], centralOnly: true },
-  slp: { label: '海面気圧', unit: 'hPa', digits: 1, source: ['pressure', 'temperature'], centralOnly: true },
+  co2: { label: 'CO2', unit: 'ppm', digits: 0, source: ['co2'], only: 'central' },
+  slp: { label: '海面気圧', unit: 'hPa', digits: 1, source: ['pressure', 'temperature'], only: 'central' },
+  bat: { label: '電池', unit: '%', digits: 0, source: ['battery'], only: 'sensor' },
+};
+
+// 測定値をそのまま描く指標
+const DIRECT: Partial<Record<ChartMetric, Metric>> = {
+  temp: 'temperature',
+  hum: 'humidity',
+  co2: 'co2',
+  bat: 'battery',
 };
 
 const GRANULARITY: Record<string, string> = {
@@ -72,10 +82,11 @@ const devices = computed<Device[]>(() => latest.value?.devices ?? []);
 const colors = computed(() => deviceColors(devices.value));
 const metric = computed(() => METRICS[state.metric]);
 
-// 初回は先頭の 3 台を選ぶ
+// 初回は先頭の 3 台を選ぶ。一覧を読み込むまでは、保存した選択に触れない
 watch(
   devices,
   (list) => {
+    if (list.length === 0) return;
     const ids = new Set(list.map((d) => d.id));
     state.selected = state.selected.filter((id) => ids.has(id));
     if (state.selected.length === 0)
@@ -100,9 +111,11 @@ const period = computed(() => {
   return { from: now - seconds, to: now };
 });
 
-const targets = computed(() =>
-  devices.value.filter((d) => state.selected.includes(d.id) && (!metric.value.centralOnly || isCentral(d.kind))),
-);
+const measures = (d: Device) => {
+  const only = metric.value.only;
+  return only === undefined || (only === 'central') === isCentral(d.kind);
+};
+const targets = computed(() => devices.value.filter((d) => state.selected.includes(d.id) && measures(d)));
 
 const response = shallowRef<SeriesResponse | null>(null);
 const loading = ref(false);
@@ -154,8 +167,9 @@ const chartSeries = computed<ChartSeries[]>(() => {
       switch (state.metric) {
         case 'temp':
         case 'hum':
-        case 'co2': {
-          const m: Metric = state.metric === 'temp' ? 'temperature' : state.metric === 'hum' ? 'humidity' : 'co2';
+        case 'co2':
+        case 'bat': {
+          const m = DIRECT[state.metric]!;
           const mean = at(m, 'avg', i);
           if (mean !== null) points.push({ t, mean, lo: at(m, 'min', i) ?? mean, hi: at(m, 'max', i) ?? mean });
           break;
@@ -202,7 +216,8 @@ const chartRange = computed(() => {
 const subtitle = computed(() => {
   const r = response.value;
   const { from, to } = period.value;
-  const span = `${formatDate(from)} 〜 ${formatDate(to)}`;
+  const date = (t: number) => (jst(from).year === jst(to).year ? formatDate(t) : `${jst(t).year}/${formatDate(t)}`);
+  const span = `${date(from)} 〜 ${date(to)}`;
   if (!r) return span;
   return `${span} · ${metric.value.derived ? GRANULARITY[r.resolution].replace(/最小〜最大（帯）と/, '') + '（平均から計算）' : GRANULARITY[r.resolution]}`;
 });
@@ -250,10 +265,10 @@ function toggle(id: number) {
             :key="d.id"
             type="button"
             class="dchip"
-            :class="{ na: metric.centralOnly && !isCentral(d.kind) }"
+            :class="{ na: !measures(d) }"
             :aria-pressed="state.selected.includes(d.id)"
             :style="{ '--c': colors.get(d.id) }"
-            :title="metric.centralOnly && !isCentral(d.kind) ? 'この指標は測っていません' : undefined"
+            :title="measures(d) ? undefined : 'この指標は測っていません'"
             @click="toggle(d.id)"
           >
             <span class="key"></span>{{ d.name ?? d.address }}
@@ -275,9 +290,11 @@ function toggle(id: number) {
       <p v-if="error" class="message">グラフを読み込めませんでした（{{ error }}）</p>
       <p v-else-if="targets.length === 0" class="message">
         {{
-          metric.centralOnly
+          metric.only === 'central'
             ? 'この指標を測っているのはセントラルだけです。セントラルを選んでください。'
-            : '表示するデバイスを選んでください。'
+            : metric.only === 'sensor'
+              ? 'この指標があるのは温湿度計だけです。温湿度計を選んでください。'
+              : '表示するデバイスを選んでください。'
         }}
       </p>
       <p v-else-if="!loading && chartSeries.every((s) => s.points.length === 0)" class="message">

@@ -137,7 +137,9 @@ const sparks = computed(() => {
     <div class="head">
       <span class="avatar"><component :is="icon" /></span>
       <div class="ttl">
-        <h3>{{ name }}</h3>
+        <h3>
+          {{ name }}<span v-if="device.assetTag" class="asset-tag">{{ device.assetTag }}</span>
+        </h3>
         <p class="sub">{{ kindLabel(device.kind) }}</p>
       </div>
       <div class="meta">
@@ -324,7 +326,7 @@ const sparks = computed(() => {
 }
 .hilo {
   display: grid;
-  gap: 2px;
+  line-height: 1.3;
   /* 見出しの分だけ下げ、温度の数値と横に並べる */
   margin-top: 22px;
   font-size: 12px;
@@ -365,6 +367,12 @@ const sparks = computed(() => {
   font-weight: 500;
   line-height: 1.3;
   overflow-wrap: anywhere;
+}
+.asset-tag {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 8px;
 }
 .sub {
   font-size: 12px;
