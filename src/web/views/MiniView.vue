@@ -83,7 +83,7 @@ const rows = computed(() =>
             </span>
             <span v-if="row.rssi !== null" class="it" :title="row.central ? 'Wi-Fi の電波' : 'BLE の電波'">
               <component :is="icons[signalIcon(row.rssi, row.central)]" /><span class="sr">電波 </span
-              >{{ formatNumber(row.rssi, 0) }}
+              >{{ formatNumber(row.rssi, 0) }}<small>dBm</small>
             </span>
           </span>
         </div>
@@ -193,6 +193,10 @@ const rows = computed(() =>
 }
 .sig svg {
   font-size: 13px;
+}
+.sig small {
+  font-size: 10px;
+  margin-left: 1px;
 }
 .sig .it.warn {
   color: var(--on-warn-container);

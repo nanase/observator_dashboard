@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import type { Device, DevicePatch, DeviceStatus } from '../../shared/api';
 import { DEVICE_ICONS } from '../../shared/icons';
+import DraftInput from '../components/DraftInput.vue';
 import ReceptionStatus from '../components/ReceptionStatus.vue';
 import { handleApiError, invalidateObservations } from '../composables/useObservations';
 import { api } from '../lib/api';
@@ -44,14 +45,16 @@ function showSaved(id: number) {
   }, 2000);
 }
 
-async function update(device: Device, patch: DevicePatch) {
+async function update(device: Device, patch: DevicePatch): Promise<boolean> {
   try {
     await save(device, patch);
     error.value = null;
     showSaved(device.id);
     await invalidateObservations();
+    return true;
   } catch (e) {
     error.value = handleApiError(e);
+    return false;
   }
 }
 
@@ -83,19 +86,22 @@ async function move(device: Device, offset: -1 | 1) {
 
 const parseNumber = (value: string): number | null => (value.trim() === '' ? null : Number(value));
 
-function updateText(device: Device, key: 'name' | 'assetTag', event: Event) {
-  const text = (event.target as HTMLInputElement).value.trim();
-  if (text !== (device[key] ?? '')) update(device, { [key]: text === '' ? null : text });
+async function updateText(device: Device, key: 'name' | 'assetTag', value: string): Promise<boolean> {
+  const text = value.trim();
+  return update(device, { [key]: text === '' ? null : text });
 }
 
-function updateNumber(device: Device, key: 'altitudeM' | 'temperatureMin' | 'temperatureMax', event: Event) {
-  const input = event.target as HTMLInputElement;
-  const value = parseNumber(input.value);
-  if (value !== null && !Number.isFinite(value)) {
+async function updateNumber(
+  device: Device,
+  key: 'altitudeM' | 'temperatureMin' | 'temperatureMax',
+  value: string,
+): Promise<boolean> {
+  const number = parseNumber(value);
+  if (number !== null && !Number.isFinite(number)) {
     error.value = '数値を入力してください';
-    return;
+    return false;
   }
-  if (value !== device[key]) update(device, { [key]: value });
+  return update(device, { [key]: number });
 }
 
 const summary = (d: Device) => {
@@ -184,57 +190,57 @@ const summary = (d: Device) => {
           <div class="grid">
             <label class="field">
               名前
-              <input
+              <DraftInput
                 :id="`name-${d.id}`"
                 type="text"
                 maxlength="64"
                 :value="d.name ?? ''"
                 :placeholder="d.address"
-                @change="updateText(d, 'name', $event)"
+                :save="(v) => updateText(d, 'name', v)"
               />
             </label>
             <label class="field">
               管理番号
-              <input
+              <DraftInput
                 :id="`tag-${d.id}`"
                 type="text"
                 maxlength="32"
                 :value="d.assetTag ?? ''"
                 placeholder="なし"
-                @change="updateText(d, 'assetTag', $event)"
+                :save="(v) => updateText(d, 'assetTag', v)"
               />
             </label>
             <label class="field">
               温度の適正範囲 下限（℃）
-              <input
+              <DraftInput
                 :id="`tmin-${d.id}`"
                 type="number"
                 step="0.1"
-                :value="d.temperatureMin ?? ''"
+                :value="String(d.temperatureMin ?? '')"
                 placeholder="なし"
-                @change="updateNumber(d, 'temperatureMin', $event)"
+                :save="(v) => updateNumber(d, 'temperatureMin', v)"
               />
             </label>
             <label class="field">
               温度の適正範囲 上限（℃）
-              <input
+              <DraftInput
                 :id="`tmax-${d.id}`"
                 type="number"
                 step="0.1"
-                :value="d.temperatureMax ?? ''"
+                :value="String(d.temperatureMax ?? '')"
                 placeholder="なし"
-                @change="updateNumber(d, 'temperatureMax', $event)"
+                :save="(v) => updateNumber(d, 'temperatureMax', v)"
               />
             </label>
             <label v-if="isCentral(d.kind) || d.lastReading?.pressure != null" class="field">
               設置場所の標高（m）
-              <input
+              <DraftInput
                 :id="`alt-${d.id}`"
                 type="number"
                 step="0.1"
-                :value="d.altitudeM ?? ''"
+                :value="String(d.altitudeM ?? '')"
                 placeholder="未設定"
-                @change="updateNumber(d, 'altitudeM', $event)"
+                :save="(v) => updateNumber(d, 'altitudeM', v)"
               />
             </label>
           </div>
