@@ -36,14 +36,31 @@ Access を設定してからデプロイする。順序を逆にすると、保�
 
 ### 1. Access アプリケーションを作る
 
-Cloudflare Zero Trust のダッシュボードで操作する。
+ブラウザからは Google アカウントでログインする。Google アカウントにパスキーを登録しておけば、パスコードを打たずに入れる。
 
-1. Settings → Authentication で、ログイン方法に One-time PIN があることを確かめる
+まず [Google Cloud コンソール](https://console.cloud.google.com/)で OAuth クライアントを作る。`<team>` は Zero Trust の Settings にあるチーム名である。
+
+1. 新しいプロジェクトを作る
+2. APIs & Services → Credentials → Configure Consent Screen で同意画面を作る
+   - Audience は External にする
+   - 作ったあと Audience で Publish app を押し、本番に切り替える
+   - テストのままだと、テストユーザーに登録したアカウントしかログインできない
+3. Create OAuth client で、種類が Web application のクライアントを作る
+   - Authorized JavaScript origins は `https://<team>.cloudflareaccess.com`
+   - Authorized redirect URIs は `https://<team>.cloudflareaccess.com/cdn-cgi/access/callback`
+4. Client ID と Client secret を控える
+
+続いて Cloudflare Zero Trust のダッシュボードで操作する。
+
+1. Integrations → Identity providers で Google を追加する
+   - App ID と Client Secret に、Google Cloud で控えた値を入れる
+   - 一覧の Test でログインできることを確かめる
 2. Access → Service credentials → Service Tokens で、ESP32 用のサービストークンを作る
    - Client ID と Client Secret を控える
    - 有効期限を切らすと ESP32 が送信できなくなるので、期限を把握しておく
 3. Access → Applications で Self-hosted のアプリケーションを追加する
    - ドメインは `observator.nanase.cc`
+   - ログイン方法は Google だけを選び、Apply instant authentication を有効にする
    - セッションの有効期間は 1 か月程度にする
 4. アプリケーションにポリシーを 2 つ付ける
    - Allow: Include に自分のメールアドレス
