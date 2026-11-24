@@ -43,12 +43,13 @@ Access を設定してからデプロイする。順序を逆にすると、保�
 1. 新しいプロジェクトを作る
 2. APIs & Services → Credentials → Configure Consent Screen で同意画面を作る
    - Audience は External にする
-   - 作ったあと Audience で Publish app を押し、本番に切り替える
-   - テストのままだと、テストユーザーに登録したアカウントしかログインできない
+   - 公開ステータスはテストのままにし、Audience の Test users に自分の Google アカウントを足す
+   - 本番に切り替えるには、ホームページとプライバシーポリシーの URL が要る
 3. Create OAuth client で、種類が Web application のクライアントを作る
    - Authorized JavaScript origins は `https://<team>.cloudflareaccess.com`
    - Authorized redirect URIs は `https://<team>.cloudflareaccess.com/cdn-cgi/access/callback`
 4. Client ID と Client secret を控える
+   - Client secret は作成時にしか表示されないことがある
 
 続いて Cloudflare Zero Trust のダッシュボードで操作する。
 
@@ -62,8 +63,9 @@ Access を設定してからデプロイする。順序を逆にすると、保�
    - ドメインは `observator.nanase.cc`
    - ログイン方法は Google だけを選び、Apply instant authentication を有効にする
    - セッションの有効期間は 1 か月程度にする
+   - Access settings のグローバルセッションの有効期間も同じにする
 4. アプリケーションにポリシーを 2 つ付ける
-   - Allow: Include に自分のメールアドレス
+   - Allow: Include に Google アカウントのメールアドレスを、`+` の別名を付けずに入れる
    - Service Auth: Include に手順 2 のサービストークン
 5. アプリケーションの AUD タグを控える
 
